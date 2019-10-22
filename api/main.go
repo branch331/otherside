@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"flag"
 	"fmt"
 	"html"
@@ -11,41 +10,60 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/zmb3/spotify"
-	"golang.org/x/oauth2/clientcredentials"
 )
 
 var userID = flag.String("user", "themobil9", "the Spotify user ID to look up")
+var applicationPort = "8081"
+var baseURL = "http://localhost:" + applicationPort + "/"
+var redirectURL = baseURL + "callback"
 
-//var SPOTIFY_ID = os.Getenv("SPOTIFY_ID")
-//var SPOTIFY_SECRET = os.Getenv("SPOTIFY_SECRET")
+var SPOTIFY_ID = os.Getenv("SPOTIFY_ID")
+var SPOTIFY_SECRET = os.Getenv("SPOTIFY_SECRET")
+
 //var SEATGEEK_ID = os.Getenv("SEATGEEK_ID")
+var spotifyAuth = spotify.NewAuthenticator(redirectURL, spotify.ScopePlaylistModifyPublic)
+var spotifyClient spotify.Client
 
 func main() {
 	router := mux.NewRouter().StrictSlash(true)
 	router.HandleFunc("/", Index)
-	log.Fatal(http.ListenAndServe(":8081", router))
+	router.HandleFunc("/authenticate", Authenticate)
+	router.HandleFunc("/callback", Callback)
+	log.Fatal(http.ListenAndServe(":"+applicationPort, router))
 }
 
 func Index(w http.ResponseWriter, r *http.Request) {
-	client := SetupSpotifyClient()
-	GetAndPrintProfileData(client)
-	GeneratePlayList(client, "testing the waters", "a playlist to test the waters. duh!")
+	GetAndPrintProfileData(spotifyClient)
+
+	GeneratePlayList(spotifyClient, "testing the waters", "a playlist to test the waters. duh!")
+
 	fmt.Fprintf(w, "Hello, %q", html.EscapeString(r.URL.Path))
 }
 
-func SetupSpotifyClient() spotify.Client {
-	config := &clientcredentials.Config{
-		ClientID:     os.Getenv("SPOTIFY_ID"),
-		ClientSecret: os.Getenv("SPOTIFY_SECRET"),
-		TokenURL:     spotify.TokenURL,
-	}
+func Callback(w http.ResponseWriter, r *http.Request) {
+	token, err := spotifyAuth.Token("dummyState", r)
 
-	token, err := config.Token(context.Background())
 	if err != nil {
-		log.Fatalf("couldn't get token: %v", err)
+		http.Error(w, "Couldn't get token", http.StatusNotFound)
+		return
 	}
 
-	return spotify.Authenticator{}.NewClient(token)
+	spotifyClient = spotifyAuth.NewClient(token)
+
+	http.Redirect(w, r, baseURL, http.StatusMovedPermanently)
+}
+
+func Authenticate(w http.ResponseWriter, r *http.Request) {
+	dummyState := "dummyState"
+	authenticationUrl := ObtainAuthenticationURL(dummyState)
+	fmt.Printf("%s", redirectURL)
+	http.Redirect(w, r, authenticationUrl, http.StatusMovedPermanently)
+}
+
+func ObtainAuthenticationURL(state string) string {
+	spotifyAuth.SetAuthInfo(SPOTIFY_ID, SPOTIFY_SECRET)
+
+	return spotifyAuth.AuthURL(state)
 }
 
 func GetAndPrintProfileData(client spotify.Client) {
