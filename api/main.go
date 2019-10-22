@@ -1,9 +1,10 @@
 package main
 
 import (
+	"encoding/json"
 	"flag"
 	"fmt"
-	"html"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -20,9 +21,11 @@ var redirectURL = baseURL + "callback"
 var SPOTIFY_ID = os.Getenv("SPOTIFY_ID")
 var SPOTIFY_SECRET = os.Getenv("SPOTIFY_SECRET")
 
-//var SEATGEEK_ID = os.Getenv("SEATGEEK_ID")
+var SEATGEEK_ID = os.Getenv("SEATGEEK_ID")
 var spotifyAuth = spotify.NewAuthenticator(redirectURL, spotify.ScopePlaylistModifyPublic)
 var spotifyClient spotify.Client
+
+var baseSeatGeekURL = "https://api.seatgeek.com/2/events?client_id=" + SEATGEEK_ID
 
 func main() {
 	router := mux.NewRouter().StrictSlash(true)
@@ -33,11 +36,14 @@ func main() {
 }
 
 func Index(w http.ResponseWriter, r *http.Request) {
-	GetAndPrintProfileData(spotifyClient)
+	findLocalConcerts()
+	/*
+		GetAndPrintProfileData(spotifyClient)
 
-	GeneratePlayList(spotifyClient, "testing the waters", "a playlist to test the waters. duh!")
+		GeneratePlayList(spotifyClient, "testing the waters", "a playlist to test the waters. duh!")
 
-	fmt.Fprintf(w, "Hello, %q", html.EscapeString(r.URL.Path))
+		fmt.Fprintf(w, "Hello, %q", html.EscapeString(r.URL.Path))
+	*/
 }
 
 func Callback(w http.ResponseWriter, r *http.Request) {
@@ -133,4 +139,44 @@ func GeneratePlayList(client spotify.Client, playlistName string, description st
 			fmt.Printf("Added track ID %s to playlist ID %s", trackID, playList.ID)
 		}
 	}
+}
+
+func findLocalConcerts() []string {
+	testURL := "https://api.seatgeek.com/2/events?client_id=MTkwMTMyNzF8MTU3MTYyOTgxNy40Mw&geoip=78745&range=5mi"
+
+	resp, err := http.Get(testURL)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, err.Error())
+		return nil
+	} else {
+		fmt.Printf("Obtained local events data from SeatGeek.")
+	}
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, err.Error())
+		return nil
+	}
+
+	var data map[string]interface{}
+
+	err = json.Unmarshal(body, &data) //Fields are empty?
+	if err != nil {
+		fmt.Fprintf(os.Stderr, err.Error())
+	}
+
+	var events = data["events"]
+	fmt.Printf(events.(string))
+
+	return nil
+}
+
+func getJson(url string, target interface{}) error {
+	resp, err := http.Get(url)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	return json.NewDecoder(resp.Body).Decode(target)
 }
