@@ -98,12 +98,39 @@ func GeneratePlayList(client spotify.Client, playlistName string, description st
 		return
 	}
 
-	_, err := client.CreatePlaylistForUser(*userID, playlistName, description, true)
+	playList, err := client.CreatePlaylistForUser(*userID, playlistName, description, true)
 
 	if err != nil {
 		fmt.Fprintf(os.Stderr, err.Error())
 		return
 	} else {
 		fmt.Printf("Created playlist %s for user %s", playlistName, *userID)
+	}
+
+	//var tracksToAdd []spotify.SimpleTrack
+	var trackIDsToAdd []spotify.ID
+
+	//Dummy data
+	trackIDsToAdd = append(trackIDsToAdd, "6rPO02ozF3bM7NnOV4h6s2") //Despacito
+	trackIDsToAdd = append(trackIDsToAdd, "6rPO02ozF3bM7NnOV4h6s2")
+
+	/*
+		i := 0
+
+		for len(trackIDsToAdd) > 100 {
+			client.AddTracksToPlaylist(playList.ID)
+		}
+	*/
+
+	for _, trackID := range trackIDsToAdd {
+
+		_, err := client.AddTracksToPlaylist(playList.ID, trackID)
+
+		if err != nil {
+			fmt.Fprintf(os.Stderr, err.Error())
+			return
+		} else {
+			fmt.Printf("Added track ID %s to playlist ID %s", trackID, playList.ID)
+		}
 	}
 }
