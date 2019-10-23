@@ -144,7 +144,7 @@ func GeneratePlayList(client spotify.Client, playlistName string, description st
 }
 
 func findLocalConcerts() []SeatGeekEvent {
-	testURL := "https://api.seatgeek.com/2/events?client_id=MTkwMTMyNzF8MTU3MTYyOTgxNy40Mw&geoip=78745&range=4mi"
+	testURL := "https://api.seatgeek.com/2/events?client_id=" + SEATGEEK_ID + "&geoip=78745&range=4mi"
 
 	resp, err := http.Get(testURL)
 	if err != nil {
