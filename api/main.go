@@ -28,8 +28,13 @@ var spotifyClient spotify.Client
 var baseSeatGeekURL = "https://api.seatgeek.com/2/events?client_id=" + SEATGEEK_ID
 
 type SeatGeekEvent struct {
-	title     string
-	eventType string
+	title         string
+	eventType     string
+	url           string
+	performers    []string
+	localShowtime string
+	venueName     string
+	venueLocation string
 }
 
 func main() {
@@ -125,14 +130,6 @@ func GeneratePlayList(client spotify.Client, playlistName string, description st
 	trackIDsToAdd = append(trackIDsToAdd, "6rPO02ozF3bM7NnOV4h6s2") //Despacito
 	trackIDsToAdd = append(trackIDsToAdd, "6rPO02ozF3bM7NnOV4h6s2")
 
-	/*
-		i := 0
-
-		for len(trackIDsToAdd) > 100 {
-			client.AddTracksToPlaylist(playList.ID)
-		}
-	*/
-
 	for _, trackID := range trackIDsToAdd {
 
 		_, err := client.AddTracksToPlaylist(playList.ID, trackID)
@@ -146,7 +143,7 @@ func GeneratePlayList(client spotify.Client, playlistName string, description st
 	}
 }
 
-func findLocalConcerts() []string {
+func findLocalConcerts() []SeatGeekEvent {
 	testURL := "https://api.seatgeek.com/2/events?client_id=MTkwMTMyNzF8MTU3MTYyOTgxNy40Mw&geoip=78745&range=4mi"
 
 	resp, err := http.Get(testURL)
@@ -170,22 +167,32 @@ func findLocalConcerts() []string {
 		fmt.Fprintf(os.Stderr, err.Error())
 	}
 
-	eventsArray := responseData["events"].([]interface{})
+	eventsFromResponse := responseData["events"].([]interface{})
 
-	for _, event := range eventsArray {
+	seatGeekEvents := make([]SeatGeekEvent, len(eventsFromResponse))
+
+	for i, event := range eventsFromResponse {
 		eventData := event.(map[string]interface{})
-		//fmt.Printf(eventData["title"].(string) + "\n")
+
+		seatGeekEvents[i].title = eventData["title"].(string)
+		seatGeekEvents[i].eventType = eventData["type"].(string)
+		seatGeekEvents[i].localShowtime = eventData["datetime_local"].(string)
+
+		venueData := eventData["venue"].(map[string]interface{})
+
+		seatGeekEvents[i].venueName = venueData["name"].(string)
+		seatGeekEvents[i].venueLocation = venueData["display_location"].(string)
+		seatGeekEvents[i].url = venueData["url"].(string)
 
 		performersArray := eventData["performers"].([]interface{})
 
 		for _, performer := range performersArray {
 			performerData := performer.(map[string]interface{})
-
-			fmt.Printf(performerData["short_name"].(string) + "\n")
+			seatGeekEvents[i].performers = append(seatGeekEvents[i].performers, performerData["short_name"].(string))
 		}
 	}
 
-	return nil
+	return seatGeekEvents
 }
 
 func getJson(url string, target interface{}) error {
