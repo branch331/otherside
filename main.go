@@ -27,6 +27,11 @@ var spotifyClient spotify.Client
 
 var baseSeatGeekURL = "https://api.seatgeek.com/2/events?client_id=" + SEATGEEK_ID
 
+type SeatGeekEvent struct {
+	title     string
+	eventType string
+}
+
 func main() {
 	router := mux.NewRouter().StrictSlash(true)
 	router.HandleFunc("/", Index)
@@ -142,14 +147,14 @@ func GeneratePlayList(client spotify.Client, playlistName string, description st
 }
 
 func findLocalConcerts() []string {
-	testURL := "https://api.seatgeek.com/2/events?client_id=MTkwMTMyNzF8MTU3MTYyOTgxNy40Mw&geoip=78745&range=5mi"
+	testURL := "https://api.seatgeek.com/2/events?client_id=MTkwMTMyNzF8MTU3MTYyOTgxNy40Mw&geoip=78745&range=4mi"
 
 	resp, err := http.Get(testURL)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, err.Error())
 		return nil
 	} else {
-		fmt.Printf("Obtained local events data from SeatGeek.")
+		fmt.Printf("Obtained local events data from SeatGeek.\n")
 	}
 
 	body, err := ioutil.ReadAll(resp.Body)
@@ -158,15 +163,27 @@ func findLocalConcerts() []string {
 		return nil
 	}
 
-	var data map[string]interface{}
+	var responseData map[string]interface{}
 
-	err = json.Unmarshal(body, &data) //Fields are empty?
+	err = json.Unmarshal(body, &responseData) //Fields are empty?
 	if err != nil {
 		fmt.Fprintf(os.Stderr, err.Error())
 	}
 
-	var events = data["events"]
-	fmt.Printf(events.(string))
+	eventsArray := responseData["events"].([]interface{})
+
+	for _, event := range eventsArray {
+		eventData := event.(map[string]interface{})
+		//fmt.Printf(eventData["title"].(string) + "\n")
+
+		performersArray := eventData["performers"].([]interface{})
+
+		for _, performer := range performersArray {
+			performerData := performer.(map[string]interface{})
+
+			fmt.Printf(performerData["short_name"].(string) + "\n")
+		}
+	}
 
 	return nil
 }
