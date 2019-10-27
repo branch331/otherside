@@ -52,9 +52,9 @@ func Index(w http.ResponseWriter, r *http.Request) {
 }
 
 func test(w http.ResponseWriter, r *http.Request) {
-	localSeatGeekEvents := findLocalEvents()
+	localSeatGeekEvents := findLocalEvents("78745", "20")
 
-	playlistID := GeneratePlayList(spotifyClient, "Best playlist!", "Desc")
+	playlistID := GeneratePlayList(spotifyClient, "Best playlist2!", "Desc")
 
 	for _, event := range localSeatGeekEvents {
 		if event.eventType == "concert" || event.eventType == "music_festival" {
@@ -155,10 +155,16 @@ func SearchAndFindSpotifyArtistID(client spotify.Client, artistName string) spot
 	return ""
 }
 
-func findLocalEvents() []SeatGeekEvent {
-	testURL := "https://api.seatgeek.com/2/events?client_id=" + SEATGEEK_ID + "&geoip=78745&range=20mi"
+func findLocalEvents(postalCode string, rangeMiles string) []SeatGeekEvent {
+	SeatGeekLocalEventsURL := "https://api.seatgeek.com/2/events?client_id=" +
+		SEATGEEK_ID +
+		"&geoip=" +
+		postalCode +
+		"&range=" +
+		rangeMiles +
+		"mi"
 
-	resp, err := http.Get(testURL)
+	resp, err := http.Get(SeatGeekLocalEventsURL)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, err.Error())
 		return nil
