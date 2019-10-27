@@ -13,18 +13,18 @@ var applicationPort = "8081"
 
 func main() {
 	router := mux.NewRouter().StrictSlash(true)
-	router.HandleFunc("/", index)
+	router.HandleFunc("/", Index)
 	router.HandleFunc("/authenticate", Authenticate)
 	router.HandleFunc("/callback", Callback)
-	router.HandleFunc("/test", test)
+	router.HandleFunc("/test", Test)
 	log.Fatal(http.ListenAndServe(":"+applicationPort, router))
 }
 
-func index(w http.ResponseWriter, r *http.Request) {
-
+func Index(w http.ResponseWriter, r *http.Request) {
+	http.ServeFile(w, r, "../frontend/index.html")
 }
 
-func test(w http.ResponseWriter, r *http.Request) {
+func Test(w http.ResponseWriter, r *http.Request) {
 	localSeatGeekEvents := seatgeekLayer.FindLocalEvents("78745", "20")
 
 	playlistID := spotifyLayer.GeneratePlayList("Best playlist2!", "Desc")

@@ -82,7 +82,6 @@ func FindLocalEvents(postalCode string, rangeMiles string) []SeatGeekEvent {
 
 func GetSeatGeekArtistGenres(performerId string) []string {
 	SeatGeekPerformerURL := "https://api.seatgeek.com/2/performers/" + performerId + "?client_id=" + SEATGEEK_ID
-	fmt.Printf(SeatGeekPerformerURL)
 
 	resp, err := http.Get(SeatGeekPerformerURL)
 	if err != nil {
@@ -105,6 +104,10 @@ func GetSeatGeekArtistGenres(performerId string) []string {
 	}
 
 	var genreArray []string
+
+	if status, statusExists := responseData["status"].(string); statusExists {
+		return append(genreArray, status)
+	}
 
 	if genresFromResponse, keyExists := responseData["genres"].([]interface{}); keyExists {
 		for _, genre := range genresFromResponse {
