@@ -39,8 +39,8 @@ func SetNewSpotifyClient(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, baseURL, http.StatusMovedPermanently)
 }
 
-func GetTopFourSpotifyArtistTracks(client spotify.Client, artistID spotify.ID) []spotify.FullTrack {
-	topTracks, err := client.GetArtistsTopTracks(artistID, "US")
+func GetTopFourSpotifyArtistTracks(artistID spotify.ID) []spotify.FullTrack {
+	topTracks, err := spotifyClient.GetArtistsTopTracks(artistID, "US")
 	if err != nil {
 		fmt.Fprintf(os.Stderr, err.Error())
 		return nil
@@ -57,7 +57,7 @@ func GetTopFourSpotifyArtistTracks(client spotify.Client, artistID spotify.ID) [
 	}
 }
 
-func GeneratePlayList(client spotify.Client, playlistName string, description string) spotify.ID {
+func GeneratePlayList(playlistName string, description string) spotify.ID {
 	flag.Parse()
 
 	if *userID == "" {
@@ -66,7 +66,7 @@ func GeneratePlayList(client spotify.Client, playlistName string, description st
 		return ""
 	}
 
-	playList, err := client.CreatePlaylistForUser(*userID, playlistName, description, true)
+	playList, err := spotifyClient.CreatePlaylistForUser(*userID, playlistName, description, true)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, err.Error())
 		return ""
@@ -77,9 +77,9 @@ func GeneratePlayList(client spotify.Client, playlistName string, description st
 	return playList.ID
 }
 
-func AddTracksToPlaylist(client spotify.Client, playlistID spotify.ID, tracksToAdd []spotify.FullTrack) {
+func AddTracksToPlaylist(playlistID spotify.ID, tracksToAdd []spotify.FullTrack) {
 	for _, track := range tracksToAdd {
-		_, err := client.AddTracksToPlaylist(playlistID, track.ID)
+		_, err := spotifyClient.AddTracksToPlaylist(playlistID, track.ID)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, err.Error())
 			return
@@ -87,8 +87,8 @@ func AddTracksToPlaylist(client spotify.Client, playlistID spotify.ID, tracksToA
 	}
 }
 
-func SearchAndFindSpotifyArtistID(client spotify.Client, artistName string) spotify.ID {
-	searchResults, err := client.Search(artistName, spotify.SearchTypeArtist)
+func SearchAndFindSpotifyArtistID(artistName string) spotify.ID {
+	searchResults, err := spotifyClient.Search(artistName, spotify.SearchTypeArtist)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, err.Error())
 		return ""
