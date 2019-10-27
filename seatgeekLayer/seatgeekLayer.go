@@ -9,19 +9,19 @@ import (
 )
 
 type SeatGeekEvent struct {
-	title         string
-	eventType     string
-	url           string
-	performers    []string
-	genres        []string //possibly nil
-	localShowtime string
-	venueName     string
-	venueLocation string
+	Title         string
+	EventType     string
+	Url           string
+	Performers    []string
+	Genres        []string //possibly nil
+	LocalShowtime string
+	VenueName     string
+	VenueLocation string
 }
 
 var SEATGEEK_ID = os.Getenv("SEATGEEK_ID")
 
-func findLocalEvents(postalCode string, rangeMiles string) []SeatGeekEvent {
+func FindLocalEvents(postalCode string, rangeMiles string) []SeatGeekEvent {
 	SeatGeekLocalEventsURL := "https://api.seatgeek.com/2/events?client_id=" +
 		SEATGEEK_ID +
 		"&geoip=" +
@@ -58,22 +58,22 @@ func findLocalEvents(postalCode string, rangeMiles string) []SeatGeekEvent {
 	for i, event := range eventsFromResponse {
 		eventData := event.(map[string]interface{})
 
-		seatGeekEvents[i].title = eventData["title"].(string)
-		seatGeekEvents[i].eventType = eventData["type"].(string)
-		seatGeekEvents[i].localShowtime = eventData["datetime_local"].(string)
+		seatGeekEvents[i].Title = eventData["title"].(string)
+		seatGeekEvents[i].EventType = eventData["type"].(string)
+		seatGeekEvents[i].LocalShowtime = eventData["datetime_local"].(string)
 
 		venueData := eventData["venue"].(map[string]interface{})
 
-		seatGeekEvents[i].venueName = venueData["name"].(string)
-		seatGeekEvents[i].venueLocation = venueData["display_location"].(string)
-		seatGeekEvents[i].url = venueData["url"].(string)
+		seatGeekEvents[i].VenueName = venueData["name"].(string)
+		seatGeekEvents[i].VenueLocation = venueData["display_location"].(string)
+		seatGeekEvents[i].Url = venueData["url"].(string)
 
 		performersArray := eventData["performers"].([]interface{})
 
 		for _, performer := range performersArray {
 			performerData := performer.(map[string]interface{})
-			seatGeekEvents[i].performers = append(seatGeekEvents[i].performers, performerData["short_name"].(string))
-			seatGeekEvents[i].genres = GetSeatGeekArtistGenres(fmt.Sprintf("%d", int(performerData["id"].(float64))))
+			seatGeekEvents[i].Performers = append(seatGeekEvents[i].Performers, performerData["short_name"].(string))
+			seatGeekEvents[i].Genres = GetSeatGeekArtistGenres(fmt.Sprintf("%d", int(performerData["id"].(float64))))
 		}
 	}
 
