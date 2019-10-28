@@ -8,10 +8,11 @@ import (
 	"os"
 )
 
+//SeatGeekEvent is a struct to handle pertinent SeatGeek response data.
 type SeatGeekEvent struct {
 	Title         string
 	EventType     string
-	Url           string
+	URL           string
 	Performers    []string
 	Genres        []string //possibly nil
 	LocalShowtime string
@@ -21,6 +22,8 @@ type SeatGeekEvent struct {
 
 var SEATGEEK_ID = os.Getenv("SEATGEEK_ID")
 
+//FindLocalEvents makes a request to the SeatGeek Events API using the postal code and range,
+//and returns an array of SeatGeekEvents.
 func FindLocalEvents(postalCode string, rangeMiles string) []SeatGeekEvent {
 	SeatGeekLocalEventsURL := "https://api.seatgeek.com/2/events?client_id=" +
 		SEATGEEK_ID +
@@ -66,7 +69,7 @@ func FindLocalEvents(postalCode string, rangeMiles string) []SeatGeekEvent {
 
 		seatGeekEvents[i].VenueName = venueData["name"].(string)
 		seatGeekEvents[i].VenueLocation = venueData["display_location"].(string)
-		seatGeekEvents[i].Url = venueData["url"].(string)
+		seatGeekEvents[i].URL = venueData["url"].(string)
 
 		performersArray := eventData["performers"].([]interface{})
 
@@ -80,8 +83,9 @@ func FindLocalEvents(postalCode string, rangeMiles string) []SeatGeekEvent {
 	return seatGeekEvents
 }
 
-func GetSeatGeekArtistGenres(performerId string) []string {
-	SeatGeekPerformerURL := "https://api.seatgeek.com/2/performers/" + performerId + "?client_id=" + SEATGEEK_ID
+//GetSeatGeekArtistGenres returns an array of all genres pertinent to a performer.
+func GetSeatGeekArtistGenres(performerID string) []string {
+	SeatGeekPerformerURL := "https://api.seatgeek.com/2/performers/" + performerID + "?client_id=" + SEATGEEK_ID
 
 	resp, err := http.Get(SeatGeekPerformerURL)
 	if err != nil {
