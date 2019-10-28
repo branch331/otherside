@@ -23,11 +23,12 @@ func main() {
 	router.HandleFunc("/localevents", LocalEvents)
 	router.HandleFunc("/toptracks", TopTracks).Methods("POST")
 	router.HandleFunc("/buildplaylist", BuildPlaylist).Methods("POST")
+
 	log.Fatal(http.ListenAndServe(":"+applicationPort, router))
 }
 
 func Index(w http.ResponseWriter, r *http.Request) {
-	http.ServeFile(w, r, "../frontend/index.html")
+	//Don't serve a view; this will just be an API so keep frontend/backend separate
 }
 
 //GET
