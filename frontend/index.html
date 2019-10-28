@@ -1,1 +1,20 @@
-<h5>Welcome to app!</h5>
+<!DOCTYPE html>
+<head>
+    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+</head>
+
+<body>
+    <h5>Welcome to app!</h5>
+
+    <div id="app">
+    {{ message }}
+    </div>
+</body>
+
+var app = new Vue({
+    data: {
+        message: 'Hello!!!'
+    }
+})
+
+</html>
