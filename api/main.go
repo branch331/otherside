@@ -33,6 +33,8 @@ func Index(w http.ResponseWriter, r *http.Request) {
 
 //GET
 func LocalEvents(w http.ResponseWriter, r *http.Request) {
+	enableCors(&w)
+
 	postCode, ok := r.URL.Query()["postcode"]
 	if !ok || len(postCode[0]) < 1 {
 		fmt.Printf("Postcode parameter missing from localevents request.")
@@ -57,6 +59,8 @@ func LocalEvents(w http.ResponseWriter, r *http.Request) {
 
 //POST
 func TopTracks(w http.ResponseWriter, r *http.Request) {
+	enableCors(&w)
+
 	var localSeatGeekEvents []seatgeekLayer.SeatGeekEvent
 	var topTracks []spotify.FullTrack
 
@@ -86,6 +90,8 @@ func TopTracks(w http.ResponseWriter, r *http.Request) {
 
 //POST
 func BuildPlaylist(w http.ResponseWriter, r *http.Request) {
+	enableCors(&w)
+
 	playlistName, ok := r.URL.Query()["name"]
 	if !ok || len(playlistName[0]) < 1 {
 		fmt.Printf("playlistName parameter missing from buildplaylist request.")
@@ -117,4 +123,8 @@ func Authenticate(w http.ResponseWriter, r *http.Request) {
 	authenticationUrl := spotifyLayer.ObtainAuthenticationURL(dummyState)
 
 	http.Redirect(w, r, authenticationUrl, http.StatusMovedPermanently)
+}
+
+func enableCors(w *http.ResponseWriter) {
+	(*w).Header().Set("Access-Control-Allow-Origin", "*")
 }
