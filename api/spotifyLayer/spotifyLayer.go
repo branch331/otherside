@@ -71,7 +71,7 @@ func GeneratePlayList(playlistName string, description string) spotify.ID {
 		fmt.Fprintf(os.Stderr, err.Error())
 		return ""
 	} else {
-		fmt.Printf("Created playlist %s for user %s", playlistName, *userID)
+		fmt.Printf("Created playlist %s for user %s\n", playlistName, *userID)
 	}
 
 	return playList.ID

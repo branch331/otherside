@@ -5,6 +5,12 @@
     <h2>Test Data:</h2>
     <h2 v-if="localEvents">{{localEvents}}</h2>
 
+    <h2>Test Top Tracks Data:</h2>
+    <h2 v-if="topTracks">{{topTracks}}</h2>
+
+    <h2>Playlist Status:</h2>
+    <h2 v-if="playlistStatus">{{playlistStatus}}</h2>
+
     <p>
       For a guide and recipes on how to configure / customize this project,<br>
       check out the
@@ -44,14 +50,37 @@ export default {
   },
   data () {
     return {
-      localEvents: null
+      localEvents: null,
+      topTracks: null,
+      playlistStatus: null
     }
   },
   mounted () {
-    axios.get("http://localhost:8081/localevents?postcode=78759&miles=20")
+    axios.get("http://localhost:8081/localevents?postcode=78745&miles=50")
       .then((response => {
-        this.localEvents = response
+        this.localEvents = response.data;
+        this.getTopTracks(response.data);
       }));
+  },
+  methods: {
+    getTopTracks: function (localEventData) {
+      axios.post("http://localhost:8081/toptracks", JSON.stringify(localEventData))
+        .then((response => {
+          this.topTracks = response.data;
+          this.buildPlaylist("Greetings from Axios", "A description for the ages.", response.data);
+        }));
+    },
+    buildPlaylist: function (name, desc, topTracks) {
+      var buildPlaylistURL = "http://localhost:8081/buildplaylist?name=" +
+        name +
+        "&desc=" +
+        desc;
+
+      axios.post(buildPlaylistURL, JSON.stringify(topTracks))
+        .then((response => {
+          this.playlistStatus = response.data;
+        }));
+    }
   }
 }
 </script>
