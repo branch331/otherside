@@ -116,15 +116,28 @@ func BuildPlaylist(w http.ResponseWriter, r *http.Request) {
 	spotifyLayer.AddTracksToPlaylist(playlistID, topTracks)
 }
 
+//GET
 func Callback(w http.ResponseWriter, r *http.Request) {
-	spotifyLayer.SetNewSpotifyClient(w, r)
+	state, ok := r.URL.Query()["state"]
+	if !ok || len(state[0]) < 1 {
+		fmt.Printf("State parameter missing from callback.")
+	}
+
+	spotifyLayer.SetNewSpotifyClient(w, r, state[0])
 }
 
+//GET
 func Authenticate(w http.ResponseWriter, r *http.Request) {
-	dummyState := "dummyState"
-	authenticationUrl := spotifyLayer.ObtainAuthenticationURL(dummyState)
+	enableCors(&w)
 
-	http.Redirect(w, r, authenticationUrl, http.StatusMovedPermanently)
+	state, ok := r.URL.Query()["state"]
+	if !ok || len(state[0]) < 1 {
+		fmt.Printf("State parameter missing from authenticate request.")
+	}
+
+	authenticationUrl := spotifyLayer.ObtainAuthenticationURL(state[0])
+
+	fmt.Fprint(w, authenticationUrl)
 }
 
 func enableCors(w *http.ResponseWriter) {

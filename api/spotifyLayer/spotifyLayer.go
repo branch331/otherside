@@ -26,8 +26,8 @@ func ObtainAuthenticationURL(state string) string {
 	return spotifyAuth.AuthURL(state)
 }
 
-func SetNewSpotifyClient(w http.ResponseWriter, r *http.Request) {
-	token, err := spotifyAuth.Token("dummyState", r)
+func SetNewSpotifyClient(w http.ResponseWriter, r *http.Request, state string) {
+	token, err := spotifyAuth.Token(state, r)
 
 	if err != nil {
 		http.Error(w, "Couldn't get token", http.StatusNotFound)
