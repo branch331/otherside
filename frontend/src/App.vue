@@ -2,23 +2,27 @@
   <div id="app">
     <img alt="Vue logo" src="./assets/logo.png">
 
-      <p>Current route name: {{ $route.name }}</p>
-      <ul>
-        <li><router-link :to="{ name: 'home' }">home</router-link></li>
-        <li><router-link :to="{ name: 'callback' }">callback</router-link></li>
-      </ul>
+    <p>Current route name: {{ $route.name }}</p>
+    <ul>
+      <li><router-link :to="{ name: 'home' }">home</router-link></li>
+      <li><router-link :to="{ name: 'callback' }">callback</router-link></li>
+    </ul>
 
-    <LocalEvents/>
+    <p>Current route param: {{ $route.params.state }}</p>
+
+    <router-view></router-view>
   </div>
 </template>
 
 <script>
-import LocalEvents from './components/LocalEvents.vue'
+//import Home from './components/Home.vue'
+//import Callback from './components/Callback.vue'
 
 export default {
   name: 'app',
   components: {
-    LocalEvents
+    //Home,
+    //Callback
   }
 }
 </script>
