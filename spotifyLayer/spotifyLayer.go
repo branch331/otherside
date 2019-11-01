@@ -19,8 +19,6 @@ var redirectURL = baseURL + "callback"
 var SPOTIFY_ID = os.Getenv("SPOTIFY_ID")
 var SPOTIFY_SECRET = os.Getenv("SPOTIFY_SECRET")
 
-//var userID = flag.String("user", "themobil9", "the Spotify user ID to look up")
-
 func ObtainAuthenticationURL(state string) string {
 	spotifyAuth.SetAuthInfo(SPOTIFY_ID, SPOTIFY_SECRET)
 
@@ -58,14 +56,6 @@ func GetTopFourSpotifyArtistTracks(artistID spotify.ID) []spotify.FullTrack {
 
 func GeneratePlayList(playlistName string, description string) spotify.ID {
 	flag.Parse()
-
-	/*
-		if *userID == "" {
-			fmt.Fprintf(os.Stderr, "Error: missing user ID\n")
-			flag.Usage()
-			return ""
-		}
-	*/
 
 	currentUser, err := spotifyClient.CurrentUser()
 	if err != nil {
