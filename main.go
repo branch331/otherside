@@ -14,7 +14,7 @@ import (
 )
 
 var applicationPort = "8081"
-var callbackRedirectURL = "http://localhost:8080/callback"
+var callbackRedirectURL = "http://localhost:8080/#/callback"
 
 func main() {
 	router := mux.NewRouter().StrictSlash(true)
@@ -135,7 +135,10 @@ func Callback(w http.ResponseWriter, r *http.Request) {
 	}
 
 	spotifyLayer.SetNewSpotifyClient(w, r, state[0])
-	http.Redirect(w, r, callbackRedirectURL, http.StatusSeeOther)
+
+	redirectURL := callbackRedirectURL + "?state=" + state[0]
+
+	http.Redirect(w, r, redirectURL, http.StatusSeeOther)
 }
 
 //GET
