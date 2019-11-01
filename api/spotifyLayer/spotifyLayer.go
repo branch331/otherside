@@ -35,8 +35,6 @@ func SetNewSpotifyClient(w http.ResponseWriter, r *http.Request, state string) {
 	}
 
 	spotifyClient = spotifyAuth.NewClient(token)
-
-	http.Redirect(w, r, baseURL, http.StatusMovedPermanently)
 }
 
 func GetTopFourSpotifyArtistTracks(artistID spotify.ID) []spotify.FullTrack {

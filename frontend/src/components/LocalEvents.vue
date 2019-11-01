@@ -1,11 +1,15 @@
 <template>
   <div class="hello">
-    <h1>{{ msg }}</h1>
 
-    <button v-on:click="redirectToURL">Log In</button>
-    
-    <h2>Test Data:</h2>
-    <h2 v-if="localEvents">{{localEvents}}</h2>
+    <h2>Events Data:</h2>
+    <div v-if="localEvents">
+
+      <button v-on:click="redirectToURL">Log In</button>
+      <button v-on:click="buildPlaylist('MY special playlist!', 'My special playlists description')">Build Playlist</button>
+
+      <p>{{localEvents}}</p>
+
+    </div>
 
     <h2>Test Top Tracks Data:</h2>
     <h2 v-if="topTracks">{{topTracks}}</h2>
@@ -21,9 +25,6 @@ import axios from 'axios'
 
 export default {
   name: 'HelloWorld',
-  props: {
-    msg: String,
-  },
   data () {
     return {
       localEvents: null,
@@ -34,34 +35,35 @@ export default {
     }
   },
   mounted () {
-    /*
-    axios.get("http://localhost:8081/localevents?postcode=78745&miles=50")
-      .then((response => {
-        this.localEvents = response.data;
-        this.getTopTracks(response.data);
-      }));
-    */
-    
+    this.getLocalEvents('78759', '50');
     this.setNewSpotifyAuthenticationUrl();
   },
   methods: {
-    getTopTracks: function (localEventData) {
-      axios.post("http://localhost:8081/toptracks", JSON.stringify(localEventData))
+    getLocalEvents: function (postalCode, milesString) {
+      var localEventsURL = "http://localhost:8081/localevents?postcode=" +
+      postalCode +
+      "&miles=" +
+      milesString;
+
+      axios.get(localEventsURL)
         .then((response => {
-          this.topTracks = response.data;
-          this.buildPlaylist("Greetings from Axios", "A description for the ages.", response.data);
+          this.localEvents = response.data;
+          //this.getTopTracks(response.data);
         }));
     },
-    buildPlaylist: function (name, desc, topTracks) {
+    buildPlaylist: function (name, desc) {
       var buildPlaylistURL = "http://localhost:8081/buildplaylist?name=" +
         name +
         "&desc=" +
         desc;
 
-      axios.post(buildPlaylistURL, JSON.stringify(topTracks))
+      axios.post("http://localhost:8081/toptracks", JSON.stringify(this.localEvents))
         .then((response => {
-          this.playlistStatus = response.data;
-        }));
+          axios.post(buildPlaylistURL, JSON.stringify(response.data))
+            .then((response => {
+              this.playlistStatus = response.data;
+          }));
+      }));
     },
     setNewSpotifyAuthenticationUrl: function() {
       this.spotifyStateString = this.getRandomStateString()

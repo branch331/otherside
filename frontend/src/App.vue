@@ -1,17 +1,24 @@
 <template>
   <div id="app">
     <img alt="Vue logo" src="./assets/logo.png">
-    <HelloWorld msg="Welcome to Your Vue.js App"/>
+
+      <p>Current route name: {{ $route.name }}</p>
+      <ul>
+        <li><router-link :to="{ name: 'home' }">home</router-link></li>
+        <li><router-link :to="{ name: 'callback' }">callback</router-link></li>
+      </ul>
+
+    <LocalEvents/>
   </div>
 </template>
 
 <script>
-import HelloWorld from './components/HelloWorld.vue'
+import LocalEvents from './components/LocalEvents.vue'
 
 export default {
   name: 'app',
   components: {
-    HelloWorld
+    LocalEvents
   }
 }
 </script>
