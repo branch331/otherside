@@ -14,6 +14,7 @@ import (
 )
 
 var applicationPort = "8081"
+var callbackRedirectURL = "http://localhost:8080/callback"
 
 func main() {
 	router := mux.NewRouter().StrictSlash(true)
@@ -37,7 +38,7 @@ func LocalEvents(w http.ResponseWriter, r *http.Request) {
 
 	postCode, ok := r.URL.Query()["postcode"]
 	if !ok || len(postCode[0]) < 1 {
-		fmt.Printf("Postcode parameter missing from localevents request.")
+		fmt.Printf("postcode parameter missing from localevents request.")
 	}
 
 	rangeMiles, ok := r.URL.Query()["miles"]
@@ -116,6 +117,16 @@ func BuildPlaylist(w http.ResponseWriter, r *http.Request) {
 	spotifyLayer.AddTracksToPlaylist(playlistID, topTracks)
 }
 
+//POST
+func ConfigureCallbackURL(w http.ResponseWriter, r *http.Request) {
+	enableCors(&w)
+
+	redirectURL, ok := r.URL.Query()["redirectURL"]
+	if !ok || len(redirectURL[0]) < 1 {
+		fmt.Printf("redirectURL parameter missing from configuration request.")
+	}
+}
+
 //GET
 func Callback(w http.ResponseWriter, r *http.Request) {
 	state, ok := r.URL.Query()["state"]
@@ -124,6 +135,7 @@ func Callback(w http.ResponseWriter, r *http.Request) {
 	}
 
 	spotifyLayer.SetNewSpotifyClient(w, r, state[0])
+	http.Redirect(w, r, callbackRedirectURL, http.StatusSeeOther)
 }
 
 //GET
