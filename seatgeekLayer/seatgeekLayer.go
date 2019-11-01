@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"time"
 )
 
 //SeatGeekEvent is a struct to handle pertinent SeatGeek response data.
@@ -33,6 +34,8 @@ func FindLocalEvents(postalCode string, rangeMiles string) []SeatGeekEvent {
 		rangeMiles +
 		"mi"
 
+	t1 := time.Now()
+
 	resp, err := http.Get(SeatGeekLocalEventsURL)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, err.Error())
@@ -40,6 +43,10 @@ func FindLocalEvents(postalCode string, rangeMiles string) []SeatGeekEvent {
 	} else {
 		fmt.Printf("Obtained local events data from SeatGeek.\n")
 	}
+
+	fmt.Println("[Time benchmark] Get Seatgeek response: " + time.Since(t1).String())
+
+	t2 := time.Now()
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
@@ -57,6 +64,10 @@ func FindLocalEvents(postalCode string, rangeMiles string) []SeatGeekEvent {
 	eventsFromResponse := responseData["events"].([]interface{})
 
 	seatGeekEvents := make([]SeatGeekEvent, len(eventsFromResponse))
+
+	fmt.Println("[Time benchmark] Seatgeek layer initial data conversions: " + time.Since(t2).String())
+
+	t3 := time.Now()
 
 	for i, event := range eventsFromResponse {
 		eventData := event.(map[string]interface{})
@@ -79,6 +90,8 @@ func FindLocalEvents(postalCode string, rangeMiles string) []SeatGeekEvent {
 			seatGeekEvents[i].Genres = GetSeatGeekArtistGenres(fmt.Sprintf("%d", int(performerData["id"].(float64))))
 		}
 	}
+
+	fmt.Println("[Time benchmark] Seatgeek layer event data population: " + time.Since(t3).String())
 
 	return seatGeekEvents
 }
