@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"reflect"
 	"time"
 )
 
@@ -34,7 +35,7 @@ func FindLocalEvents(postalCode string, rangeMiles string) []SeatGeekEvent {
 		rangeMiles +
 		"mi"
 
-	t1 := time.Now()
+	t4 := time.Now()
 
 	resp, err := http.Get(SeatGeekLocalEventsURL)
 	if err != nil {
@@ -43,10 +44,6 @@ func FindLocalEvents(postalCode string, rangeMiles string) []SeatGeekEvent {
 	} else {
 		fmt.Printf("Obtained local events data from SeatGeek.\n")
 	}
-
-	fmt.Println("[Time benchmark] Get Seatgeek response: " + time.Since(t1).String())
-
-	t2 := time.Now()
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
@@ -62,12 +59,9 @@ func FindLocalEvents(postalCode string, rangeMiles string) []SeatGeekEvent {
 	}
 
 	eventsFromResponse := responseData["events"].([]interface{})
-
 	seatGeekEvents := make([]SeatGeekEvent, len(eventsFromResponse))
-
-	fmt.Println("[Time benchmark] Seatgeek layer initial data conversions: " + time.Since(t2).String())
-
-	t3 := time.Now()
+	//genreChannels := make([]chan []string, len(eventsFromResponse))
+	genreChannels := make([][]chan []string, len(eventsFromResponse))
 
 	for i, event := range eventsFromResponse {
 		eventData := event.(map[string]interface{})
@@ -86,30 +80,63 @@ func FindLocalEvents(postalCode string, rangeMiles string) []SeatGeekEvent {
 
 		for _, performer := range performersArray {
 			performerData := performer.(map[string]interface{})
+			channel := make(chan []string)
+			genreChannels[i] = append(genreChannels[i], channel)
+
 			seatGeekEvents[i].Performers = append(seatGeekEvents[i].Performers, performerData["short_name"].(string))
-			seatGeekEvents[i].Genres = GetSeatGeekArtistGenres(fmt.Sprintf("%d", int(performerData["id"].(float64))))
+			go GetSeatGeekArtistGenres(fmt.Sprintf("%d", int(performerData["id"].(float64))), channel)
 		}
 	}
 
-	fmt.Println("[Time benchmark] Seatgeek layer event data population: " + time.Since(t3).String())
+	cases := make([][]reflect.SelectCase, len(genreChannels))
+
+	remainingCases := 0
+
+	for k, genreChannelArray := range genreChannels {
+		cases[k] = make([]reflect.SelectCase, len(genreChannelArray))
+
+		for m, genreChannel := range genreChannelArray {
+			cases[k][m] = reflect.SelectCase{Dir: reflect.SelectRecv, Chan: reflect.ValueOf(genreChannel)}
+			remainingCases++
+		}
+	}
+
+	for remainingCases > 0 {
+		for n, caseArray := range cases {
+			for _, currentCase := range caseArray {
+				_, value, ok := reflect.Select(caseArray)
+
+				if !ok {
+					//Channel has been closed; zero out channel to disable the case
+					currentCase.Chan = reflect.ValueOf(nil)
+					remainingCases--
+					continue
+				}
+				fmt.Println(value.Interface().([]string))
+				seatGeekEvents[n].Genres = append(seatGeekEvents[n].Genres, value.Interface().([]string)...)
+			}
+		}
+	}
+
+	fmt.Println("[Time benchmark] Makin slow calls " + time.Since(t4).String())
 
 	return seatGeekEvents
 }
 
 //GetSeatGeekArtistGenres returns an array of all genres pertinent to a performer.
-func GetSeatGeekArtistGenres(performerID string) []string {
+func GetSeatGeekArtistGenres(performerID string, genreChannel chan<- []string) {
 	SeatGeekPerformerURL := "https://api.seatgeek.com/2/performers/" + performerID + "?client_id=" + SEATGEEK_ID
 
 	resp, err := http.Get(SeatGeekPerformerURL)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, err.Error())
-		return nil
+		genreChannel <- nil
 	}
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, err.Error())
-		return nil
+		genreChannel <- nil
 	}
 
 	var responseData map[string]interface{}
@@ -117,13 +144,13 @@ func GetSeatGeekArtistGenres(performerID string) []string {
 	err = json.Unmarshal(body, &responseData)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, err.Error())
-		return nil
+		genreChannel <- nil
 	}
 
 	var genreArray []string
 
 	if status, statusExists := responseData["status"].(string); statusExists {
-		return append(genreArray, status)
+		genreChannel <- append(genreArray, status)
 	}
 
 	if genresFromResponse, keyExists := responseData["genres"].([]interface{}); keyExists {
@@ -133,5 +160,6 @@ func GetSeatGeekArtistGenres(performerID string) []string {
 		}
 	}
 
-	return genreArray
+	genreChannel <- genreArray
+	close(genreChannel)
 }
