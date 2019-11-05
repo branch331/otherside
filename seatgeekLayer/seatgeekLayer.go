@@ -4,9 +4,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"math"
 	"net/http"
 	"os"
 	"reflect"
+	"strconv"
 	"time"
 )
 
@@ -27,7 +29,7 @@ var SEATGEEK_ID = os.Getenv("SEATGEEK_ID")
 //FindLocalEvents makes a request to the SeatGeek Events API using the postal code and range,
 //and returns an array of SeatGeekEvents.
 func FindLocalEvents(postalCode string, rangeMiles string) []SeatGeekEvent {
-	SeatGeekLocalEventsURL := "https://api.seatgeek.com/2/events?client_id=" +
+	BaseSeatGeekLocalEventsURL := "https://api.seatgeek.com/2/events?client_id=" +
 		SEATGEEK_ID +
 		"&geoip=" +
 		postalCode +
@@ -37,10 +39,60 @@ func FindLocalEvents(postalCode string, rangeMiles string) []SeatGeekEvent {
 
 	t4 := time.Now()
 
-	resp, err := http.Get(SeatGeekLocalEventsURL)
+	totalSeatgeekEvents := FindTotalSeatgeekEvents(BaseSeatGeekLocalEventsURL)
+
+	if totalSeatgeekEvents < 100 {
+		var seatGeekEvents []SeatGeekEvent
+		seatGeekChan := make(chan []SeatGeekEvent)
+		go MakeSeatgeekEventsRequest(BaseSeatGeekLocalEventsURL, 1, seatGeekChan)
+		//****TO-DO select only one array here and return
+		return seatGeekEvents
+	}
+
+	totalPages := int(math.Ceil(float64(totalSeatgeekEvents) / 100))
+
+	var seatGeekEventChannels []chan []SeatGeekEvent
+
+	for pageNumber := 1; pageNumber <= totalPages; pageNumber++ {
+		seatGeekChan := make(chan []SeatGeekEvent)
+		seatGeekEventChannels = append(seatGeekEventChannels, seatGeekChan)
+		go MakeSeatgeekEventsRequest(BaseSeatGeekLocalEventsURL, pageNumber, seatGeekChan)
+	}
+
+	cases := make([]reflect.SelectCase, len(seatGeekEventChannels))
+
+	for i, seatGeekEventChan := range seatGeekEventChannels {
+		cases[i] = reflect.SelectCase{Dir: reflect.SelectRecv, Chan: reflect.ValueOf(seatGeekEventChan)}
+	}
+
+	//var seatGeekEvents2D = make([][]SeatGeekEvent, totalPages)
+	var seatGeekEvents []SeatGeekEvent
+	remainingCases := len(cases)
+
+	for remainingCases > 0 {
+		chosen, value, ok := reflect.Select(cases)
+		if !ok {
+			//Channel has been closed; zero out channel to disable the case
+			cases[chosen].Chan = reflect.ValueOf(nil)
+			remainingCases--
+			continue
+		}
+		seatGeekEvents = append(seatGeekEvents, value.Interface().([]SeatGeekEvent)...)
+	}
+
+	fmt.Println("[Time benchmark] Makin slow calls " + time.Since(t4).String())
+
+	return seatGeekEvents
+}
+
+//FindTotalSeatgeekEvents returns the total amount of Seatgeek events in the area
+func FindTotalSeatgeekEvents(baseURL string) int {
+	SingleEventSeatgeekURL := baseURL + "&per_page=1"
+
+	resp, err := http.Get(SingleEventSeatgeekURL)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, err.Error())
-		return nil
+		return 0
 	} else {
 		fmt.Printf("Obtained local events data from SeatGeek.\n")
 	}
@@ -48,7 +100,34 @@ func FindLocalEvents(postalCode string, rangeMiles string) []SeatGeekEvent {
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, err.Error())
-		return nil
+		return 0
+	}
+
+	var responseData map[string]interface{}
+
+	err = json.Unmarshal(body, &responseData)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, err.Error())
+	}
+
+	metaData := responseData["meta"].(interface{})
+	return int(metaData.(map[string]interface{})["total"].(float64))
+}
+
+//MakeSeatgeekEventsRequest performs an HTTP request to obtain a single page of event information for an area
+func MakeSeatgeekEventsRequest(baseURL string, pageNumber int, seatGeekChan chan<- []SeatGeekEvent) {
+	SeatGeekLocalEventsURL := baseURL + "&per_page=100&page=" + strconv.FormatInt(int64(pageNumber), 10)
+
+	resp, err := http.Get(SeatGeekLocalEventsURL)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, err.Error())
+		seatGeekChan <- nil
+	}
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, err.Error())
+		seatGeekChan <- nil
 	}
 
 	var responseData map[string]interface{}
@@ -60,7 +139,6 @@ func FindLocalEvents(postalCode string, rangeMiles string) []SeatGeekEvent {
 
 	eventsFromResponse := responseData["events"].([]interface{})
 	seatGeekEvents := make([]SeatGeekEvent, len(eventsFromResponse))
-	//genreChannels := make([]chan []string, len(eventsFromResponse))
 	genreChannels := make([][]chan []string, len(eventsFromResponse))
 
 	for i, event := range eventsFromResponse {
@@ -112,15 +190,13 @@ func FindLocalEvents(postalCode string, rangeMiles string) []SeatGeekEvent {
 					remainingCases--
 					continue
 				}
-				fmt.Println(value.Interface().([]string))
 				seatGeekEvents[n].Genres = append(seatGeekEvents[n].Genres, value.Interface().([]string)...)
 			}
 		}
 	}
 
-	fmt.Println("[Time benchmark] Makin slow calls " + time.Since(t4).String())
-
-	return seatGeekEvents
+	seatGeekChan <- seatGeekEvents
+	close(seatGeekChan)
 }
 
 //GetSeatGeekArtistGenres returns an array of all genres pertinent to a performer.
