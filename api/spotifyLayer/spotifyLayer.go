@@ -36,21 +36,13 @@ func SetNewSpotifyClient(w http.ResponseWriter, r *http.Request, state string) {
 	spotifyClient = spotifyAuth.NewClient(token)
 }
 
-func GetTopFourSpotifyArtistTracks(artistID spotify.ID) []spotify.FullTrack {
+func GetTopSpotifyArtistTrack(artistID spotify.ID) spotify.FullTrack {
 	topTracks, err := spotifyClient.GetArtistsTopTracks(artistID, "US")
 	if err != nil {
 		fmt.Fprintf(os.Stderr, err.Error())
-		return nil
+		return topTracks[0]
 	} else {
-		var topFourTracks []spotify.FullTrack
-
-		for i, track := range topTracks {
-			topFourTracks = append(topFourTracks, track)
-			if i == 3 {
-				break
-			}
-		}
-		return topFourTracks
+		return topTracks[0]
 	}
 }
 

@@ -12,9 +12,6 @@
 
     </div>
 
-    <h2>Test Top Tracks Data:</h2>
-    <h2 v-if="topTracks">{{topTracks}}</h2>
-
     <h2>Playlist Status:</h2>
     <h2 v-if="playlistStatus">{{playlistStatus}}</h2>
 

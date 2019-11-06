@@ -13,9 +13,6 @@
 
     </div>
 
-    <h2>Test Top Tracks Data:</h2>
-    <h2 v-if="topTracks">{{topTracks}}</h2>
-
     <h2>Playlist Status:</h2>
     <h2 v-if="playlistStatus">{{playlistStatus}}</h2>
 
@@ -30,14 +27,13 @@ export default {
   data () {
     return {
       localEvents: null,
-      topTracks: null,
       playlistStatus: null,
       spotifyAuthenticationUrl: null,
       spotifyStateString: null
     }
   },
   mounted () {
-    this.getLocalEvents('78759', '50');
+    this.getLocalEvents('78759', '10');
     this.setNewSpotifyAuthenticationUrl();
   },
   methods: {
