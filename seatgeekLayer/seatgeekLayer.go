@@ -65,7 +65,6 @@ func FindLocalEvents(postalCode string, rangeMiles string) []SeatGeekEvent {
 		cases[i] = reflect.SelectCase{Dir: reflect.SelectRecv, Chan: reflect.ValueOf(seatGeekEventChan)}
 	}
 
-	//var seatGeekEvents2D = make([][]SeatGeekEvent, totalPages)
 	var seatGeekEvents []SeatGeekEvent
 	remainingCases := len(cases)
 
@@ -116,16 +115,18 @@ func FindTotalSeatgeekEvents(baseURL string) int {
 
 //MakeSeatgeekEventsRequest performs an HTTP request to obtain a single page of event information for an area
 func MakeSeatgeekEventsRequest(baseURL string, pageNumber int, seatGeekChan chan<- []SeatGeekEvent) {
-	SeatGeekLocalEventsURL := baseURL + "&per_page=100&page=" + strconv.FormatInt(int64(pageNumber), 10)
+	SeatGeekLocalMusicEventsURL := baseURL + "&type=concert&type=music_festival&datetime_utc.gte=2019-11-05&datetime_utc.lte=2019-11-12&per_page=100&page=" + strconv.FormatInt(int64(pageNumber), 10)
 
-	resp, err := http.Get(SeatGeekLocalEventsURL)
+	resp, err := http.Get(SeatGeekLocalMusicEventsURL)
 	if err != nil {
+		fmt.Println("[MakeSeatgeekEventsRequest] initial GET")
 		fmt.Fprintf(os.Stderr, err.Error())
 		seatGeekChan <- nil
 	}
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
+		fmt.Println("[MakeSeatgeekEventsRequest] ioutil ReadAll")
 		fmt.Fprintf(os.Stderr, err.Error())
 		seatGeekChan <- nil
 	}
@@ -134,6 +135,7 @@ func MakeSeatgeekEventsRequest(baseURL string, pageNumber int, seatGeekChan chan
 
 	err = json.Unmarshal(body, &responseData)
 	if err != nil {
+		fmt.Println("[MakeSeatgeekEventsRequest] unmarshal")
 		fmt.Fprintf(os.Stderr, err.Error())
 	}
 
@@ -162,80 +164,18 @@ func MakeSeatgeekEventsRequest(baseURL string, pageNumber int, seatGeekChan chan
 			genreChannels[i] = append(genreChannels[i], channel)
 
 			seatGeekEvents[i].Performers = append(seatGeekEvents[i].Performers, performerData["short_name"].(string))
-			go GetSeatGeekArtistGenres(fmt.Sprintf("%d", int(performerData["id"].(float64))), channel)
-		}
-	}
 
-	cases := make([][]reflect.SelectCase, len(genreChannels))
+			if performerData["genres"] != nil {
+				genreArray := performerData["genres"].([]interface{})
 
-	remainingCases := 0
-
-	for k, genreChannelArray := range genreChannels {
-		cases[k] = make([]reflect.SelectCase, len(genreChannelArray))
-
-		for m, genreChannel := range genreChannelArray {
-			cases[k][m] = reflect.SelectCase{Dir: reflect.SelectRecv, Chan: reflect.ValueOf(genreChannel)}
-			remainingCases++
-		}
-	}
-
-	for remainingCases > 0 {
-		for n, caseArray := range cases {
-			for _, currentCase := range caseArray {
-				_, value, ok := reflect.Select(caseArray)
-
-				if !ok {
-					//Channel has been closed; zero out channel to disable the case
-					currentCase.Chan = reflect.ValueOf(nil)
-					remainingCases--
-					continue
+				for _, genre := range genreArray {
+					genreData := genre.(map[string]interface{})
+					seatGeekEvents[i].Genres = append(seatGeekEvents[i].Genres, genreData["slug"].(string))
 				}
-				seatGeekEvents[n].Genres = append(seatGeekEvents[n].Genres, value.Interface().([]string)...)
 			}
 		}
 	}
 
 	seatGeekChan <- seatGeekEvents
 	close(seatGeekChan)
-}
-
-//GetSeatGeekArtistGenres returns an array of all genres pertinent to a performer.
-func GetSeatGeekArtistGenres(performerID string, genreChannel chan<- []string) {
-	SeatGeekPerformerURL := "https://api.seatgeek.com/2/performers/" + performerID + "?client_id=" + SEATGEEK_ID
-
-	resp, err := http.Get(SeatGeekPerformerURL)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, err.Error())
-		genreChannel <- nil
-	}
-
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, err.Error())
-		genreChannel <- nil
-	}
-
-	var responseData map[string]interface{}
-
-	err = json.Unmarshal(body, &responseData)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, err.Error())
-		genreChannel <- nil
-	}
-
-	var genreArray []string
-
-	if status, statusExists := responseData["status"].(string); statusExists {
-		genreChannel <- append(genreArray, status)
-	}
-
-	if genresFromResponse, keyExists := responseData["genres"].([]interface{}); keyExists {
-		for _, genre := range genresFromResponse {
-			genreData := genre.(map[string]interface{})
-			genreArray = append(genreArray, genreData["slug"].(string))
-		}
-	}
-
-	genreChannel <- genreArray
-	close(genreChannel)
 }

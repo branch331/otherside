@@ -71,12 +71,10 @@ func TopTracks(w http.ResponseWriter, r *http.Request) {
 	}
 
 	for _, event := range localSeatGeekEvents {
-		if event.EventType == "concert" || event.EventType == "music_festival" {
-			for _, performer := range event.Performers {
-				artistID := spotifyLayer.SearchAndFindSpotifyArtistID(performer)
-				if artistID != "" {
-					topTracks = append(topTracks, spotifyLayer.GetTopFourSpotifyArtistTracks(artistID)...)
-				}
+		for _, performer := range event.Performers {
+			artistID := spotifyLayer.SearchAndFindSpotifyArtistID(performer)
+			if artistID != "" {
+				topTracks = append(topTracks, spotifyLayer.GetTopSpotifyArtistTrack(artistID))
 			}
 		}
 	}
