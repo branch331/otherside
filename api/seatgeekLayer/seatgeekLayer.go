@@ -7,6 +7,7 @@ import (
 	"math"
 	"net/http"
 	"os"
+	"otherside/api/redisLayer"
 	"reflect"
 	"strconv"
 	"time"
@@ -45,6 +46,10 @@ func FindLocalEvents(postalCode string, rangeMiles string) []SeatGeekEvent {
 	if err != nil {
 		fmt.Printf(err.Error())
 	}
+
+	redisLayer.Ping()
+	redisLayer.SetSeatgeekEvents("78759")
+	redisLayer.GetSeatgeekEvents("78759")
 
 	if timeToday.EndOfDay.Sub(time.Now().In(UTCTimeLocation)) > 0 {
 		//If postalcode s something in the cache...
