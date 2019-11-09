@@ -13,7 +13,7 @@ func Initialize() {
 	pool = newPool()
 }
 
-func SetSeatgeekEvents(postCode string) error {
+func SetSeatgeekEvents(postCode string, seatGeekEvents []byte) error {
 	if pool == nil {
 		Initialize()
 	}
@@ -21,7 +21,7 @@ func SetSeatgeekEvents(postCode string) error {
 	conn := pool.Get()
 	defer conn.Close()
 
-	_, err := conn.Do("SET", postCode, "test")
+	_, err := conn.Do("SET", postCode, seatGeekEvents)
 	if err != nil {
 		return err
 	}
@@ -29,7 +29,7 @@ func SetSeatgeekEvents(postCode string) error {
 	return nil
 }
 
-func GetSeatgeekEvents(postCode string) error {
+func GetSeatgeekEvents(postCode string) ([]byte, error) {
 	if pool == nil {
 		Initialize()
 	}
@@ -37,14 +37,12 @@ func GetSeatgeekEvents(postCode string) error {
 	conn := pool.Get()
 	defer conn.Close()
 
-	s, err := redis.String(conn.Do("GET", postCode))
+	seatGeekEvents, err := redis.String(conn.Do("GET", postCode))
 	if err != nil {
-		return err
+		fmt.Printf(err.Error())
 	}
 
-	fmt.Printf("got em: %s\n", s)
-
-	return nil
+	return []byte(seatGeekEvents), nil
 }
 
 func Ping() {
