@@ -4,10 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"math"
 	"net/http"
 	"os"
-	"reflect"
 	"strconv"
 	"time"
 )
@@ -25,62 +23,74 @@ type SeatGeekEvent struct {
 }
 
 var SEATGEEK_ID = os.Getenv("SEATGEEK_ID")
+var requestExpirationTime time.Time
 
 //FindLocalEvents makes a request to the SeatGeek Events API using the postal code and range,
 //and returns an array of SeatGeekEvents.
 func FindLocalEvents(postalCode string, rangeMiles string) []SeatGeekEvent {
-	BaseSeatGeekLocalEventsURL := "https://api.seatgeek.com/2/events?client_id=" +
-		SEATGEEK_ID +
-		"&geoip=" +
-		postalCode +
-		"&range=" +
-		rangeMiles +
-		"mi"
-
-	t4 := time.Now()
-
-	totalSeatgeekEvents := FindTotalSeatgeekEvents(BaseSeatGeekLocalEventsURL)
-
-	if totalSeatgeekEvents < 100 {
-		var seatGeekEvents []SeatGeekEvent
-		seatGeekChan := make(chan []SeatGeekEvent)
-		go MakeSeatgeekEventsRequest(BaseSeatGeekLocalEventsURL, 1, seatGeekChan)
-		//****TO-DO select only one array here and return
-		return seatGeekEvents
-	}
-
-	totalPages := int(math.Ceil(float64(totalSeatgeekEvents) / 100))
-
-	var seatGeekEventChannels []chan []SeatGeekEvent
-
-	for pageNumber := 1; pageNumber <= totalPages; pageNumber++ {
-		seatGeekChan := make(chan []SeatGeekEvent)
-		seatGeekEventChannels = append(seatGeekEventChannels, seatGeekChan)
-		go MakeSeatgeekEventsRequest(BaseSeatGeekLocalEventsURL, pageNumber, seatGeekChan)
-	}
-
-	cases := make([]reflect.SelectCase, len(seatGeekEventChannels))
-
-	for i, seatGeekEventChan := range seatGeekEventChannels {
-		cases[i] = reflect.SelectCase{Dir: reflect.SelectRecv, Chan: reflect.ValueOf(seatGeekEventChan)}
-	}
 
 	var seatGeekEvents []SeatGeekEvent
-	remainingCases := len(cases)
 
-	for remainingCases > 0 {
-		chosen, value, ok := reflect.Select(cases)
-		if !ok {
-			//Channel has been closed; zero out channel to disable the case
-			cases[chosen].Chan = reflect.ValueOf(nil)
-			remainingCases--
-			continue
-		}
-		seatGeekEvents = append(seatGeekEvents, value.Interface().([]SeatGeekEvent)...)
+	if requestExpirationTime.Sub(time.Now()) > 0 {
+		fmt.Println("NOT expired!! Here's your cached value")
+		//Return seatGeekEvents here :)
 	}
 
-	fmt.Println("[Time benchmark] Makin slow calls " + time.Since(t4).String())
+	requestExpirationTime = time.Now().Add(time.Hour * 24)
 
+	/*
+		BaseSeatGeekLocalEventsURL := "https://api.seatgeek.com/2/events?client_id=" +
+			SEATGEEK_ID +
+			"&geoip=" +
+			postalCode +
+			"&range=" +
+			rangeMiles +
+			"mi"
+
+		t4 := time.Now()
+
+		totalSeatgeekEvents := FindTotalSeatgeekEvents(BaseSeatGeekLocalEventsURL)
+
+		if totalSeatgeekEvents < 100 {
+			var seatGeekEvents []SeatGeekEvent
+			seatGeekChan := make(chan []SeatGeekEvent)
+			go MakeSeatgeekEventsRequest(BaseSeatGeekLocalEventsURL, 1, seatGeekChan)
+			//****TO-DO select only one array here and return
+			return seatGeekEvents
+		}
+
+		totalPages := int(math.Ceil(float64(totalSeatgeekEvents) / 100))
+
+		var seatGeekEventChannels []chan []SeatGeekEvent
+
+		for pageNumber := 1; pageNumber <= totalPages; pageNumber++ {
+			seatGeekChan := make(chan []SeatGeekEvent)
+			seatGeekEventChannels = append(seatGeekEventChannels, seatGeekChan)
+			go MakeSeatgeekEventsRequest(BaseSeatGeekLocalEventsURL, pageNumber, seatGeekChan)
+		}
+
+		cases := make([]reflect.SelectCase, len(seatGeekEventChannels))
+
+		for i, seatGeekEventChan := range seatGeekEventChannels {
+			cases[i] = reflect.SelectCase{Dir: reflect.SelectRecv, Chan: reflect.ValueOf(seatGeekEventChan)}
+		}
+
+		var seatGeekEvents []SeatGeekEvent
+		remainingCases := len(cases)
+
+		for remainingCases > 0 {
+			chosen, value, ok := reflect.Select(cases)
+			if !ok {
+				//Channel has been closed; zero out channel to disable the case
+				cases[chosen].Chan = reflect.ValueOf(nil)
+				remainingCases--
+				continue
+			}
+			seatGeekEvents = append(seatGeekEvents, value.Interface().([]SeatGeekEvent)...)
+		}
+
+		fmt.Println("[Time benchmark] Makin slow calls " + time.Since(t4).String())
+	*/
 	return seatGeekEvents
 }
 
