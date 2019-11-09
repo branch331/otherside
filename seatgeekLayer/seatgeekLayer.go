@@ -24,20 +24,37 @@ type SeatGeekEvent struct {
 	VenueLocation string
 }
 
+//TimeToday saves the truncated value of the beginning and end times of the day
+type TimeToday struct {
+	BeginningOfDay time.Time
+	EndOfDay       time.Time
+}
+
 var SEATGEEK_ID = os.Getenv("SEATGEEK_ID")
 var requestExpirationTime time.Time
+var timeToday TimeToday
+var currentEventsTEST []SeatGeekEvent
 
 //FindLocalEvents makes a request to the SeatGeek Events API using the postal code and range,
 //and returns an array of SeatGeekEvents.
 func FindLocalEvents(postalCode string, rangeMiles string) []SeatGeekEvent {
 
-	if requestExpirationTime.Sub(time.Now()) > 0 {
-		//If postalcode, rangeMiles, genres? is something in the cache...
-		fmt.Println("NOT expired!! Here's your cached value")
-		//Return seatGeekEvents here :)
+	t4 := time.Now()
+
+	UTCTimeLocation, err := time.LoadLocation("UTC")
+	if err != nil {
+		fmt.Printf(err.Error())
 	}
 
-	requestExpirationTime = time.Now().Add(time.Hour * 24)
+	if timeToday.EndOfDay.Sub(time.Now().In(UTCTimeLocation)) > 0 {
+		//If postalcode s something in the cache...
+		fmt.Println("NOT expired!! Here's your cached value")
+		//Return seatGeekEvents here :) based on requested genres
+		fmt.Println("[Time benchmark] Makin slow calls " + time.Since(t4).String())
+		return currentEventsTEST
+	}
+
+	timeToday = GetTimeToday(UTCTimeLocation)
 
 	BaseSeatGeekLocalEventsURL := "https://api.seatgeek.com/2/events?client_id=" +
 		SEATGEEK_ID +
@@ -47,14 +64,12 @@ func FindLocalEvents(postalCode string, rangeMiles string) []SeatGeekEvent {
 		rangeMiles +
 		"mi"
 
-	t4 := time.Now()
-
 	totalSeatgeekEvents := FindTotalSeatgeekEvents(BaseSeatGeekLocalEventsURL)
 
 	if totalSeatgeekEvents < 100 {
 		var seatGeekEvents []SeatGeekEvent
 		seatGeekChan := make(chan []SeatGeekEvent)
-		go MakeSeatgeekEventsRequest(BaseSeatGeekLocalEventsURL, 1, seatGeekChan)
+		go MakeSeatgeekEventsRequest(BaseSeatGeekLocalEventsURL, 1, timeToday, seatGeekChan)
 		//****TO-DO select only one array here and return
 		return seatGeekEvents
 	}
@@ -66,7 +81,7 @@ func FindLocalEvents(postalCode string, rangeMiles string) []SeatGeekEvent {
 	for pageNumber := 1; pageNumber <= totalPages; pageNumber++ {
 		seatGeekChan := make(chan []SeatGeekEvent)
 		seatGeekEventChannels = append(seatGeekEventChannels, seatGeekChan)
-		go MakeSeatgeekEventsRequest(BaseSeatGeekLocalEventsURL, pageNumber, seatGeekChan)
+		go MakeSeatgeekEventsRequest(BaseSeatGeekLocalEventsURL, pageNumber, timeToday, seatGeekChan)
 	}
 
 	cases := make([]reflect.SelectCase, len(seatGeekEventChannels))
@@ -91,7 +106,23 @@ func FindLocalEvents(postalCode string, rangeMiles string) []SeatGeekEvent {
 
 	fmt.Println("[Time benchmark] Makin slow calls " + time.Since(t4).String())
 
+	currentEventsTEST = append(currentEventsTEST, seatGeekEvents...)
 	return seatGeekEvents
+}
+
+//GetTimeToday returns struct of the upper and lower datetime bounds of the current day in UTC
+func GetTimeToday(loc *time.Location) TimeToday {
+	var timeToday TimeToday
+
+	currentTime := time.Now().In(loc)
+
+	timeBeginningOfDay := time.Date(currentTime.Year(), currentTime.Month(), currentTime.Day(), 0, 0, 0, 0, loc)
+	timeEndOfDay := timeBeginningOfDay.Add(24 * time.Hour)
+
+	timeToday.BeginningOfDay = timeBeginningOfDay
+	timeToday.EndOfDay = timeEndOfDay
+
+	return timeToday
 }
 
 //FindTotalSeatgeekEvents returns the total amount of Seatgeek events in the area
@@ -124,8 +155,15 @@ func FindTotalSeatgeekEvents(baseURL string) int {
 }
 
 //MakeSeatgeekEventsRequest performs an HTTP request to obtain a single page of event information for an area
-func MakeSeatgeekEventsRequest(baseURL string, pageNumber int, seatGeekChan chan<- []SeatGeekEvent) {
-	SeatGeekLocalMusicEventsURL := baseURL + "&type=concert&type=music_festival&datetime_utc.gte=2019-11-05&datetime_utc.lte=2019-11-12&per_page=100&page=" + strconv.FormatInt(int64(pageNumber), 10)
+func MakeSeatgeekEventsRequest(baseURL string, pageNumber int, timeToday TimeToday, seatGeekChan chan<- []SeatGeekEvent) {
+
+	SeatGeekLocalMusicEventsURL := baseURL +
+		"&datetime_utc.gte=" +
+		timeToday.BeginningOfDay.Format("2006-01-02") +
+		"&datetime_utc.lte=" +
+		timeToday.EndOfDay.Format("2006-01-02") +
+		"&type=concert&type=music_festival&per_page=100&page=" +
+		strconv.FormatInt(int64(pageNumber), 10)
 
 	resp, err := http.Get(SeatGeekLocalMusicEventsURL)
 	if err != nil {
