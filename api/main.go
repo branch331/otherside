@@ -8,6 +8,7 @@ import (
 	"os"
 	"otherside/api/seatgeekLayer"
 	"otherside/api/spotifyLayer"
+	"strings"
 
 	"github.com/gorilla/mux"
 	"github.com/zmb3/spotify"
@@ -36,17 +37,28 @@ func Index(w http.ResponseWriter, r *http.Request) {
 func LocalEvents(w http.ResponseWriter, r *http.Request) {
 	enableCors(&w)
 
-	postCode, ok := r.URL.Query()["postcode"]
-	if !ok || len(postCode[0]) < 1 {
-		fmt.Printf("postcode parameter missing from localevents request.")
+	postCodes, ok := r.URL.Query()["postcodes"]
+	if !ok || len(postCodes[0]) < 1 {
+		fmt.Printf("postcodes parameter missing from localevents request.")
 	}
 
-	rangeMiles, ok := r.URL.Query()["miles"]
-	if !ok || len(rangeMiles[0]) < 1 {
-		fmt.Printf("Mile range parameter missing from localevents request.")
+	genres, ok := r.URL.Query()["genres"]
+	if !ok || len(genres[0]) < 1 {
+		fmt.Printf("genres parameter missing from localevents request.")
 	}
 
-	localSeatGeekEvents := seatgeekLayer.FindLocalEvents(postCode[0], rangeMiles[0])
+	postCodeArray := QueryStringToArray(postCodes[0])
+	genreArray := QueryStringToArray(genres[0])
+
+	for _, val := range postCodeArray {
+		fmt.Println(val)
+	}
+
+	for _, val := range genreArray {
+		fmt.Println(val)
+	}
+
+	localSeatGeekEvents := seatgeekLayer.FindLocalEvents(postCodeArray, genreArray)
 
 	localSeatGeekEventsJSON, err := json.Marshal(localSeatGeekEvents)
 	if err != nil {
@@ -56,6 +68,12 @@ func LocalEvents(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		w.Write(localSeatGeekEventsJSON)
 	}
+}
+
+func QueryStringToArray(queryString string) []string {
+
+	testsArray := strings.Split(strings.Trim(queryString, "[]"), ",")
+	return testsArray
 }
 
 //POST
