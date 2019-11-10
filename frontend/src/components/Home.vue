@@ -33,15 +33,15 @@ export default {
     }
   },
   mounted () {
-    this.getLocalEvents('78759', '10');
+    this.getLocalEvents('[78759,22032,70001]', '[rock,electronic,hip-hop]');
     this.setNewSpotifyAuthenticationUrl();
   },
   methods: {
-    getLocalEvents: function (postalCode, milesString) {
-      var localEventsURL = "http://localhost:8081/localevents?postcode=" +
-      postalCode +
-      "&miles=" +
-      milesString;
+    getLocalEvents: function (postalCodes, genres) {
+      var localEventsURL = "http://localhost:8081/localevents?postcodes=" +
+      postalCodes +
+      "&genres=" +
+      genres;
 
       axios.get(localEventsURL)
         .then((response => {

@@ -31,14 +31,14 @@ export default {
     }
   },
   mounted () {
-    this.getLocalEvents('78759', '50');
+    this.getLocalEvents('[78759,22032,70001]', '[rock,electronic,hip-hop]');
   },
   methods: {
-    getLocalEvents: function (postalCode, milesString) {
-      var localEventsURL = "http://localhost:8081/localevents?postcode=" +
-      postalCode +
-      "&miles=" +
-      milesString;
+    getLocalEvents: function (postalCodes, genres) {
+      var localEventsURL = "http://localhost:8081/localevents?postcodes=" +
+      postalCodes +
+      "&genres=" +
+      genres;
 
       axios.get(localEventsURL)
         .then((response => {
