@@ -108,7 +108,7 @@ func FindLocalEvents(postalCodes []string, genres []string) []SeatGeekEvent {
 	}
 
 	fmt.Println("[Time benchmark] Makin slow calls " + time.Since(t4).String())
-	return filterByGenres(seatGeekEvents, genres)
+	return FilterByGenres(seatGeekEvents, genres)
 }
 
 func getTimeToday(loc *time.Location) TimeToday {
@@ -125,7 +125,8 @@ func getTimeToday(loc *time.Location) TimeToday {
 	return timeToday
 }
 
-func filterByGenres(events []SeatGeekEvent, genres []string) []SeatGeekEvent {
+//FilterByGenres returns an array of SeatGeekEvent items containing only the genres listed
+func FilterByGenres(events []SeatGeekEvent, genres []string) []SeatGeekEvent {
 	var filteredEvents []SeatGeekEvent
 
 	for _, event := range events {
