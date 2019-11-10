@@ -46,7 +46,7 @@ func FindLocalEvents(postalCodes []string, genres []string) []SeatGeekEvent {
 
 	if timeToday.EndOfDay.Sub(time.Now().In(UTCTimeLocation)) < 0 {
 		redisLayer.FlushDb()
-		timeToday = GetTimeToday(UTCTimeLocation)
+		timeToday = getTimeToday(UTCTimeLocation)
 	}
 
 	var seatGeekEventChannels []chan []SeatGeekEvent
@@ -108,11 +108,10 @@ func FindLocalEvents(postalCodes []string, genres []string) []SeatGeekEvent {
 	}
 
 	fmt.Println("[Time benchmark] Makin slow calls " + time.Since(t4).String())
-	return seatGeekEvents
+	return filterByGenres(seatGeekEvents, genres)
 }
 
-//GetTimeToday returns struct of the upper and lower datetime bounds of the current day in UTC
-func GetTimeToday(loc *time.Location) TimeToday {
+func getTimeToday(loc *time.Location) TimeToday {
 	var timeToday TimeToday
 
 	currentTime := time.Now().In(loc)
@@ -124,6 +123,30 @@ func GetTimeToday(loc *time.Location) TimeToday {
 	timeToday.EndOfDay = timeEndOfDay
 
 	return timeToday
+}
+
+func filterByGenres(events []SeatGeekEvent, genres []string) []SeatGeekEvent {
+	var filteredEvents []SeatGeekEvent
+
+	for _, event := range events {
+		for _, genre := range genres {
+			if stringInSlice(genre, event.Genres) {
+				filteredEvents = append(filteredEvents, event)
+				break
+			}
+		}
+	}
+
+	return filteredEvents
+}
+
+func stringInSlice(stringToFind string, list []string) bool {
+	for _, val := range list {
+		if stringToFind == val {
+			return true
+		}
+	}
+	return false
 }
 
 //MakeSeatgeekEventsRequest performs an HTTP request to obtain a single page of event information for an area
