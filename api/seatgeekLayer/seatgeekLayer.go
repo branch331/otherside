@@ -47,24 +47,30 @@ func FindLocalEvents(postalCode string, rangeMiles string) []SeatGeekEvent {
 	}
 
 	if timeToday.EndOfDay.Sub(time.Now().In(UTCTimeLocation)) > 0 {
-		//If postalcode is something in the cache...
-		fmt.Println("NOT expired!! Here's your cached value")
-		redisLayer.Ping()
-
-		var seatGeekEvents []SeatGeekEvent
-		redisData, err := redisLayer.GetSeatgeekEvents("78759")
-
-		json.Unmarshal(redisData, &seatGeekEvents)
+		postCodeAlreadyCached, err := redisLayer.Exists(postalCode)
 		if err != nil {
-			fmt.Printf(err.Error())
+			fmt.Print(err.Error())
 		}
-		//Return seatGeekEvents here :) based on requested genres
-		fmt.Println("[Time benchmark] Redis return " + time.Since(t4).String())
 
-		return seatGeekEvents
+		if postCodeAlreadyCached {
+			fmt.Println("NOT expired!! Here's your cached value")
+			
+			var seatGeekEvents []SeatGeekEvent
+			redisData, err := redisLayer.GetSeatgeekEvents(postalCode)
+
+			json.Unmarshal(redisData, &seatGeekEvents)
+			if err != nil {
+				fmt.Printf(err.Error())
+			}
+			//Return seatGeekEvents here :) based on requested genres
+			fmt.Println("[Time benchmark] Redis return " + time.Since(t4).String())
+
+			return seatGeekEvents
+		}
+	} else {
+		redisLayer.FlushDb()
+		timeToday = GetTimeToday(UTCTimeLocation)
 	}
-
-	timeToday = GetTimeToday(UTCTimeLocation)
 
 	BaseSeatGeekLocalEventsURL := "https://api.seatgeek.com/2/events?client_id=" +
 		SEATGEEK_ID +
@@ -121,7 +127,7 @@ func FindLocalEvents(postalCode string, rangeMiles string) []SeatGeekEvent {
 		fmt.Printf(err.Error())
 	}
 
-	redisLayer.SetSeatgeekEvents("78759", seatGeekEventsSerialized)
+	redisLayer.SetSeatgeekEvents(postalCode, seatGeekEventsSerialized)
 	return seatGeekEvents
 }
 

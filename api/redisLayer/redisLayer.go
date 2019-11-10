@@ -45,6 +45,34 @@ func GetSeatgeekEvents(postCode string) ([]byte, error) {
 	return []byte(seatGeekEvents), nil
 }
 
+func Exists(key string) (bool, error) {
+	if pool == nil {
+		Initialize()
+	}
+
+	conn := pool.Get()
+	defer conn.Close()
+
+	ok, err := redis.Bool(conn.Do("EXISTS", key))
+	if err != nil {
+		return ok, fmt.Errorf("Error checking if key %s exists: %v", key, err)
+	}
+
+	return ok, err
+}
+
+func FlushDb() error {
+	if pool == nil {
+		Initialize()
+	}
+
+	conn := pool.Get()
+	defer conn.Close()
+
+	_, err := conn.Do("FLUSHDB")
+	return err
+}
+
 func Ping() {
 	if pool == nil {
 		Initialize()
