@@ -4,12 +4,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"math"
 	"net/http"
 	"os"
 	"otherside/api/redisLayer"
 	"reflect"
-	"strconv"
 	"time"
 )
 
@@ -37,7 +35,7 @@ var timeToday TimeToday
 
 //FindLocalEvents makes a request to the SeatGeek Events API using the postal code and range,
 //and returns an array of SeatGeekEvents.
-func FindLocalEvents(postalCode string, rangeMiles string) []SeatGeekEvent {
+func FindLocalEvents(postalCodes []string, genres []string) []SeatGeekEvent {
 
 	t4 := time.Now()
 
@@ -46,58 +44,47 @@ func FindLocalEvents(postalCode string, rangeMiles string) []SeatGeekEvent {
 		fmt.Printf(err.Error())
 	}
 
-	if timeToday.EndOfDay.Sub(time.Now().In(UTCTimeLocation)) > 0 {
-		postCodeAlreadyCached, err := redisLayer.Exists(postalCode)
+	if timeToday.EndOfDay.Sub(time.Now().In(UTCTimeLocation)) < 0 {
+		redisLayer.FlushDb()
+		timeToday = GetTimeToday(UTCTimeLocation)
+	}
+
+	var seatGeekEventChannels []chan []SeatGeekEvent
+	var seatGeekEvents []SeatGeekEvent
+
+	for _, postCode := range postalCodes {
+
+		postCodeAlreadyCached, err := redisLayer.Exists(postCode)
 		if err != nil {
 			fmt.Print(err.Error())
 		}
 
 		if postCodeAlreadyCached {
-			fmt.Println("NOT expired!! Here's your cached value")
-			
-			var seatGeekEvents []SeatGeekEvent
-			redisData, err := redisLayer.GetSeatgeekEvents(postalCode)
+			fmt.Println("NOT expired!!")
 
-			json.Unmarshal(redisData, &seatGeekEvents)
+			redisData, err := redisLayer.GetSeatgeekEvents(postCode)
+
 			if err != nil {
 				fmt.Printf(err.Error())
 			}
-			//Return seatGeekEvents here :) based on requested genres
-			fmt.Println("[Time benchmark] Redis return " + time.Since(t4).String())
 
-			return seatGeekEvents
+			var cachedSeatgeekEvents []SeatGeekEvent
+			json.Unmarshal(redisData, &cachedSeatgeekEvents)
+			if err != nil {
+				fmt.Printf(err.Error())
+			}
+
+			seatGeekEvents = append(seatGeekEvents, cachedSeatgeekEvents...)
+		} else {
+			BaseSeatGeekLocalEventsURL := "https://api.seatgeek.com/2/events?client_id=" +
+				SEATGEEK_ID +
+				"&range=" +
+				"50mi"
+
+			seatGeekChan := make(chan []SeatGeekEvent)
+			seatGeekEventChannels = append(seatGeekEventChannels, seatGeekChan)
+			go MakeSeatgeekEventsRequest(BaseSeatGeekLocalEventsURL, postCode, seatGeekChan)
 		}
-	} else {
-		redisLayer.FlushDb()
-		timeToday = GetTimeToday(UTCTimeLocation)
-	}
-
-	BaseSeatGeekLocalEventsURL := "https://api.seatgeek.com/2/events?client_id=" +
-		SEATGEEK_ID +
-		"&geoip=" +
-		postalCode +
-		"&range=" +
-		rangeMiles +
-		"mi"
-
-	totalSeatgeekEvents := FindTotalSeatgeekEvents(BaseSeatGeekLocalEventsURL)
-
-	if totalSeatgeekEvents < 100 {
-		var seatGeekEvents []SeatGeekEvent
-		seatGeekChan := make(chan []SeatGeekEvent)
-		go MakeSeatgeekEventsRequest(BaseSeatGeekLocalEventsURL, 1, timeToday, seatGeekChan)
-		//****TO-DO select only one array here and return
-		return seatGeekEvents
-	}
-
-	totalPages := int(math.Ceil(float64(totalSeatgeekEvents) / 100))
-
-	var seatGeekEventChannels []chan []SeatGeekEvent
-
-	for pageNumber := 1; pageNumber <= totalPages; pageNumber++ {
-		seatGeekChan := make(chan []SeatGeekEvent)
-		seatGeekEventChannels = append(seatGeekEventChannels, seatGeekChan)
-		go MakeSeatgeekEventsRequest(BaseSeatGeekLocalEventsURL, pageNumber, timeToday, seatGeekChan)
 	}
 
 	cases := make([]reflect.SelectCase, len(seatGeekEventChannels))
@@ -106,7 +93,6 @@ func FindLocalEvents(postalCode string, rangeMiles string) []SeatGeekEvent {
 		cases[i] = reflect.SelectCase{Dir: reflect.SelectRecv, Chan: reflect.ValueOf(seatGeekEventChan)}
 	}
 
-	var seatGeekEvents []SeatGeekEvent
 	remainingCases := len(cases)
 
 	for remainingCases > 0 {
@@ -117,17 +103,11 @@ func FindLocalEvents(postalCode string, rangeMiles string) []SeatGeekEvent {
 			remainingCases--
 			continue
 		}
+
 		seatGeekEvents = append(seatGeekEvents, value.Interface().([]SeatGeekEvent)...)
 	}
 
 	fmt.Println("[Time benchmark] Makin slow calls " + time.Since(t4).String())
-
-	seatGeekEventsSerialized, err := json.Marshal(seatGeekEvents)
-	if err != nil {
-		fmt.Printf(err.Error())
-	}
-
-	redisLayer.SetSeatgeekEvents(postalCode, seatGeekEventsSerialized)
 	return seatGeekEvents
 }
 
@@ -146,45 +126,17 @@ func GetTimeToday(loc *time.Location) TimeToday {
 	return timeToday
 }
 
-//FindTotalSeatgeekEvents returns the total amount of Seatgeek events in the area
-func FindTotalSeatgeekEvents(baseURL string) int {
-	SingleEventSeatgeekURL := baseURL + "&per_page=1"
-
-	resp, err := http.Get(SingleEventSeatgeekURL)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, err.Error())
-		return 0
-	} else {
-		fmt.Printf("Obtained local events data from SeatGeek.\n")
-	}
-
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, err.Error())
-		return 0
-	}
-
-	var responseData map[string]interface{}
-
-	err = json.Unmarshal(body, &responseData)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, err.Error())
-	}
-
-	metaData := responseData["meta"].(interface{})
-	return int(metaData.(map[string]interface{})["total"].(float64))
-}
-
 //MakeSeatgeekEventsRequest performs an HTTP request to obtain a single page of event information for an area
-func MakeSeatgeekEventsRequest(baseURL string, pageNumber int, timeToday TimeToday, seatGeekChan chan<- []SeatGeekEvent) {
+func MakeSeatgeekEventsRequest(baseURL string, postCode string, seatGeekChan chan<- []SeatGeekEvent) {
 
 	SeatGeekLocalMusicEventsURL := baseURL +
+		"&geoip=" +
+		postCode +
 		"&datetime_utc.gte=" +
 		timeToday.BeginningOfDay.Format("2006-01-02") +
 		"&datetime_utc.lte=" +
 		timeToday.EndOfDay.Format("2006-01-02") +
-		"&type=concert&type=music_festival&per_page=100&page=" +
-		strconv.FormatInt(int64(pageNumber), 10)
+		"&type=concert&type=music_festival&per_page=100&page=1"
 
 	resp, err := http.Get(SeatGeekLocalMusicEventsURL)
 	if err != nil {
@@ -244,6 +196,13 @@ func MakeSeatgeekEventsRequest(baseURL string, pageNumber int, timeToday TimeTod
 			}
 		}
 	}
+
+	seatGeekEventsSerialized, err := json.Marshal(seatGeekEvents)
+	if err != nil {
+		fmt.Printf(err.Error())
+	}
+
+	redisLayer.SetSeatgeekEvents(postCode, seatGeekEventsSerialized)
 
 	seatGeekChan <- seatGeekEvents
 	close(seatGeekChan)
