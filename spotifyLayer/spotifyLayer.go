@@ -7,6 +7,7 @@ import (
 	"os"
 
 	"github.com/zmb3/spotify"
+	"otherside/api/redisLayer"
 )
 
 var spotifyAuth = spotify.NewAuthenticator(redirectURL, spotify.ScopePlaylistModifyPublic)
@@ -78,13 +79,30 @@ func AddTracksToPlaylist(playlistID spotify.ID, tracksToAdd []spotify.FullTrack)
 }
 
 func SearchAndFindSpotifyArtistID(artistName string) spotify.ID {
+	artistNameAlreadyCached, err := redisLayer.Exists(artistName)
+	if err != nil {
+		fmt.Print(err.Error())
+	}
+
+	if artistNameAlreadyCached {
+		artistID, err := redisLayer.GetKeyString(artistName)
+
+		if err != nil {
+			fmt.Printf(err.Error())
+		}
+
+		return spotify.ID(artistID)
+	}
+
 	searchResults, err := spotifyClient.Search(artistName, spotify.SearchTypeArtist)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, err.Error())
 		return ""
 	} else {
 		if len(searchResults.Artists.Artists) != 0 {
-			return searchResults.Artists.Artists[0].ID
+			artistID := searchResults.Artists.Artists[0].ID
+			redisLayer.SetKeyString(artistName, string(artistID))
+			return artistID
 		}
 	}
 

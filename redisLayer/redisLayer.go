@@ -45,6 +45,38 @@ func GetSeatgeekEvents(postCode string) ([]byte, error) {
 	return []byte(seatGeekEvents), nil
 }
 
+func SetKeyString(key string, value string) error {
+	if pool == nil {
+		Initialize()
+	}
+
+	conn := pool.Get()
+	defer conn.Close()
+
+	_, err := conn.Do("SET", key, value)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func GetKeyString(key string) (string, error) {
+	if pool == nil {
+		Initialize()
+	}
+
+	conn := pool.Get()
+	defer conn.Close()
+
+	value, err := redis.String(conn.Do("GET", key))
+	if err != nil {
+		fmt.Printf(err.Error())
+	}
+
+	return value, nil
+}
+
 func Exists(key string) (bool, error) {
 	if pool == nil {
 		Initialize()
