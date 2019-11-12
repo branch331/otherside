@@ -9,6 +9,7 @@ import (
 	"otherside/api/seatgeekLayer"
 	"otherside/api/spotifyLayer"
 	"strings"
+	"time"
 
 	"github.com/gorilla/mux"
 	"github.com/zmb3/spotify"
@@ -88,6 +89,7 @@ func TopTracks(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(os.Stderr, err.Error())
 	}
 
+	t4 := time.Now()
 	for _, event := range localSeatGeekEvents {
 		for _, performer := range event.Performers {
 			artistID := spotifyLayer.SearchAndFindSpotifyArtistID(performer)
@@ -97,6 +99,7 @@ func TopTracks(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	fmt.Println("[Time benchmark] Top tracks " + time.Since(t4).String())
 	topTracksJSON, err := json.Marshal(topTracks)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, err.Error())
