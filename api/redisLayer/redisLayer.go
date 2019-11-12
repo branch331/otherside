@@ -45,6 +45,38 @@ func GetSeatgeekEvents(postCode string) ([]byte, error) {
 	return []byte(seatGeekEvents), nil
 }
 
+func SetArtistTopTrack(artistID string, topTrack []byte) error {
+	if pool == nil {
+		Initialize()
+	}
+
+	conn := pool.Get()
+	defer conn.Close()
+
+	_, err := conn.Do("SET", artistID, topTrack)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func GetArtistTopTrack(artistID string) ([]byte, error) {
+	if pool == nil {
+		Initialize()
+	}
+
+	conn := pool.Get()
+	defer conn.Close()
+
+	topTrack, err := redis.String(conn.Do("GET", artistID))
+	if err != nil {
+		fmt.Printf(err.Error())
+	}
+
+	return []byte(topTrack), nil
+}
+
 func SetKeyString(key string, value string) error {
 	if pool == nil {
 		Initialize()

@@ -1,13 +1,14 @@
 package spotifyLayer
 
 import (
+	"encoding/json"
 	"flag"
 	"fmt"
 	"net/http"
 	"os"
+	"otherside/api/redisLayer"
 
 	"github.com/zmb3/spotify"
-	"otherside/api/redisLayer"
 )
 
 var spotifyAuth = spotify.NewAuthenticator(redirectURL, spotify.ScopePlaylistModifyPublic)
@@ -38,11 +39,37 @@ func SetNewSpotifyClient(w http.ResponseWriter, r *http.Request, state string) {
 }
 
 func GetTopSpotifyArtistTrack(artistID spotify.ID) spotify.FullTrack {
+	artistIDAlreadyCached, err := redisLayer.Exists(string(artistID))
+	if err != nil {
+		fmt.Fprintf(os.Stderr, err.Error())
+	}
+
+	if artistIDAlreadyCached {
+		redisData, err := redisLayer.GetArtistTopTrack(string(artistID))
+		if err != nil {
+			fmt.Fprintf(os.Stderr, err.Error())
+		}
+
+		var cachedTopTrack spotify.FullTrack
+		json.Unmarshal(redisData, &cachedTopTrack)
+		if err != nil {
+			fmt.Printf(err.Error())
+		}
+
+		return cachedTopTrack
+	}
+
 	topTracks, err := spotifyClient.GetArtistsTopTracks(artistID, "US")
 	if err != nil {
 		fmt.Fprintf(os.Stderr, err.Error())
 		return topTracks[0]
 	} else {
+		serializedTopTrack, err := json.Marshal(topTracks[0])
+		if err != nil {
+			fmt.Printf(err.Error())
+		}
+
+		redisLayer.SetArtistTopTrack(string(artistID), serializedTopTrack)
 		return topTracks[0]
 	}
 }
