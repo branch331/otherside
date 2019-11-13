@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"os"
 	"otherside/api/seatgeekLayer"
 	"otherside/api/spotifyLayer"
 	"strings"
@@ -18,7 +17,11 @@ import (
 var applicationPort = "8081"
 var callbackRedirectURL = "http://localhost:8080/#/callback"
 
+var cityPostcodeMap map[string]string
+
 func main() {
+	cityPostcodeMap = generateCityPostcodeMap()
+
 	router := mux.NewRouter().StrictSlash(true)
 	router.HandleFunc("/", Index)
 	router.HandleFunc("/authenticate", Authenticate)
@@ -30,6 +33,17 @@ func main() {
 	log.Fatal(http.ListenAndServe(":"+applicationPort, router))
 }
 
+func generateCityPostcodeMap() map[string]string {
+	postCodeMap := map[string]string{
+		"Austin TX":     "78759",
+		"Atlanta GA":    "30301",
+		"Washington DC": "20001",
+		"Nashville TN":  "37011",
+	}
+
+	return postCodeMap
+}
+
 func Index(w http.ResponseWriter, r *http.Request) {
 	//Don't serve a view; this will just be an API so keep frontend/backend separate
 }
@@ -38,9 +52,9 @@ func Index(w http.ResponseWriter, r *http.Request) {
 func LocalEvents(w http.ResponseWriter, r *http.Request) {
 	enableCors(&w)
 
-	postCodes, ok := r.URL.Query()["postcodes"]
-	if !ok || len(postCodes[0]) < 1 {
-		fmt.Printf("postcodes parameter missing from localevents request.")
+	cities, ok := r.URL.Query()["cities"]
+	if !ok || len(cities[0]) < 1 {
+		fmt.Printf("cities parameter missing from localevents request.")
 	}
 
 	genres, ok := r.URL.Query()["genres"]
@@ -48,22 +62,20 @@ func LocalEvents(w http.ResponseWriter, r *http.Request) {
 		fmt.Printf("genres parameter missing from localevents request.")
 	}
 
-	postCodeArray := QueryStringToArray(postCodes[0])
+	citiesArray := QueryStringToArray(cities[0])
 	genreArray := QueryStringToArray(genres[0])
 
-	for _, val := range postCodeArray {
-		fmt.Println(val)
-	}
+	var postCodeArray []string
 
-	for _, val := range genreArray {
-		fmt.Println(val)
+	for _, val := range citiesArray {
+		postCodeArray = append(postCodeArray, cityPostcodeMap[val])
 	}
 
 	localSeatGeekEvents := seatgeekLayer.FindLocalEvents(postCodeArray, genreArray)
 
 	localSeatGeekEventsJSON, err := json.Marshal(localSeatGeekEvents)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, err.Error())
+		fmt.Printf("Error Marshalling localseatgeekevents data: " + err.Error())
 	} else {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
@@ -86,7 +98,7 @@ func TopTracks(w http.ResponseWriter, r *http.Request) {
 
 	err := json.NewDecoder(r.Body).Decode(&localSeatGeekEvents)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, err.Error())
+		fmt.Printf("Error decoding Spotify Top Tracks: " + err.Error())
 	}
 
 	t4 := time.Now()
@@ -102,7 +114,7 @@ func TopTracks(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("[Time benchmark] Top tracks " + time.Since(t4).String())
 	topTracksJSON, err := json.Marshal(topTracks)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, err.Error())
+		fmt.Printf("Error Marshalling Spotify top tracks: " + err.Error())
 	} else {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
@@ -128,7 +140,7 @@ func BuildPlaylist(w http.ResponseWriter, r *http.Request) {
 
 	err := json.NewDecoder(r.Body).Decode(&topTracks)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, err.Error())
+		fmt.Printf("Error decoding Spotify Top Tracks: " + err.Error())
 	}
 
 	playlistID := spotifyLayer.GeneratePlayList(playlistName[0], playlistDesc[0])
