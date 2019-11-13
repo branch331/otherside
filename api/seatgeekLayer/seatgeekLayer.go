@@ -41,7 +41,7 @@ func FindLocalEvents(postalCodes []string, genres []string) []SeatGeekEvent {
 
 	UTCTimeLocation, err := time.LoadLocation("UTC")
 	if err != nil {
-		fmt.Printf(err.Error())
+		fmt.Printf("Error creating time LoadLocation: " + err.Error())
 	}
 
 	if timeToday.EndOfDay.Sub(time.Now().In(UTCTimeLocation)) < 0 {
@@ -56,7 +56,7 @@ func FindLocalEvents(postalCodes []string, genres []string) []SeatGeekEvent {
 
 		postCodeAlreadyCached, err := redisLayer.Exists(postCode)
 		if err != nil {
-			fmt.Print(err.Error())
+			fmt.Printf("Error checking if postcode key %s exists in Redis: "+err.Error(), postCode)
 		}
 
 		if postCodeAlreadyCached {
@@ -65,13 +65,13 @@ func FindLocalEvents(postalCodes []string, genres []string) []SeatGeekEvent {
 			redisData, err := redisLayer.GetSeatgeekEvents(postCode)
 
 			if err != nil {
-				fmt.Printf(err.Error())
+				fmt.Printf("Error getting value for postcode key %s in Redis: "+err.Error(), postCode)
 			}
 
 			var cachedSeatgeekEvents []SeatGeekEvent
 			json.Unmarshal(redisData, &cachedSeatgeekEvents)
 			if err != nil {
-				fmt.Printf(err.Error())
+				fmt.Printf("Error unmarshalling value for postcode key %s from Redis: "+err.Error(), postCode)
 			}
 
 			seatGeekEvents = append(seatGeekEvents, cachedSeatgeekEvents...)
@@ -164,15 +164,13 @@ func MakeSeatgeekEventsRequest(baseURL string, postCode string, seatGeekChan cha
 
 	resp, err := http.Get(SeatGeekLocalMusicEventsURL)
 	if err != nil {
-		fmt.Println("[MakeSeatgeekEventsRequest] initial GET")
-		fmt.Fprintf(os.Stderr, err.Error())
+		fmt.Printf("Error making request to SeatGeek API %s: "+err.Error(), SeatGeekLocalMusicEventsURL)
 		seatGeekChan <- nil
 	}
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		fmt.Println("[MakeSeatgeekEventsRequest] ioutil ReadAll")
-		fmt.Fprintf(os.Stderr, err.Error())
+		fmt.Printf("Error with ReadAll for local events response: " + err.Error())
 		seatGeekChan <- nil
 	}
 
@@ -180,8 +178,7 @@ func MakeSeatgeekEventsRequest(baseURL string, postCode string, seatGeekChan cha
 
 	err = json.Unmarshal(body, &responseData)
 	if err != nil {
-		fmt.Println("[MakeSeatgeekEventsRequest] unmarshal")
-		fmt.Fprintf(os.Stderr, err.Error())
+		fmt.Printf("Error with SeatGeek response unmarshalling: " + err.Error())
 	}
 
 	eventsFromResponse := responseData["events"].([]interface{})
@@ -223,7 +220,7 @@ func MakeSeatgeekEventsRequest(baseURL string, postCode string, seatGeekChan cha
 
 	seatGeekEventsSerialized, err := json.Marshal(seatGeekEvents)
 	if err != nil {
-		fmt.Printf(err.Error())
+		fmt.Printf("Error marshalling seatgeek events data: " + err.Error())
 	}
 
 	redisLayer.SetSeatgeekEvents(postCode, seatGeekEventsSerialized)
