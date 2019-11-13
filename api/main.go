@@ -18,12 +18,15 @@ var applicationPort = "8081"
 var callbackRedirectURL = "http://localhost:8080/#/callback"
 
 var cityPostcodeMap map[string]string
+var availableGenres []string
 
 func main() {
 	cityPostcodeMap = generateCityPostcodeMap()
+	availableGenres = generateGenres()
 
 	router := mux.NewRouter().StrictSlash(true)
-	router.HandleFunc("/", Index)
+	router.HandleFunc("/cities", Cities)
+	router.HandleFunc("/genres", Genres)
 	router.HandleFunc("/authenticate", Authenticate)
 	router.HandleFunc("/callback", Callback)
 	router.HandleFunc("/localevents", LocalEvents)
@@ -44,8 +47,46 @@ func generateCityPostcodeMap() map[string]string {
 	return postCodeMap
 }
 
-func Index(w http.ResponseWriter, r *http.Request) {
-	//Don't serve a view; this will just be an API so keep frontend/backend separate
+func generateGenres() []string {
+	genres := []string{
+		"rock",
+		"indie",
+		"hip-hop",
+		"jazz",
+		"pop",
+	}
+
+	return genres
+}
+
+//GET
+func Cities(w http.ResponseWriter, r *http.Request) {
+	var cities []string
+	for key := range cityPostcodeMap {
+		cities = append(cities, key)
+	}
+
+	citiesJSON, err := json.Marshal(cities)
+	if err != nil {
+		fmt.Printf("Error Marshalling city keys: " + err.Error())
+	} else {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		w.Write(citiesJSON)
+	}
+}
+
+//GET
+func Genres(w http.ResponseWriter, r *http.Request) {
+
+	genresJSON, err := json.Marshal(availableGenres)
+	if err != nil {
+		fmt.Printf("Error Marshalling city keys: " + err.Error())
+	} else {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		w.Write(genresJSON)
+	}
 }
 
 //GET

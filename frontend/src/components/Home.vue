@@ -33,13 +33,13 @@ export default {
     }
   },
   mounted () {
-    this.getLocalEvents('[78759,22032,70001]', '[rock,electronic,hip-hop]');
+    this.getLocalEvents('Austin TX,Washington DC,Nashville TN', '[rock,electronic,hip-hop]');
     this.setNewSpotifyAuthenticationUrl();
   },
   methods: {
-    getLocalEvents: function (postalCodes, genres) {
-      var localEventsURL = "http://localhost:8081/localevents?postcodes=" +
-      postalCodes +
+    getLocalEvents: function (cities, genres) {
+      var localEventsURL = "http://localhost:8081/localevents?cities=" +
+      cities +
       "&genres=" +
       genres;
 
