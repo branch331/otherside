@@ -6,13 +6,17 @@
     <h2>Events Data:</h2>
     <p>THIS component's spotify state: {{ spotifyStateString }}</p>
 
-    <div v-if="cities">
-      <p>{{cities}}</p>
-    </div>
+    <ul v-if="cities">
+      <li v-for="city in cities" v-bind:key="city">
+        {{city}}
+      </li>
+    </ul>
 
-      <div v-if="genres">
-      <p>{{genres}}</p>
-    </div>
+    <ul v-if="genres">
+      <li v-for="genre in genres" v-bind:key="genre">
+        {{genre}}
+      </li>
+    </ul>
 
     <div v-if="localEvents">
 
