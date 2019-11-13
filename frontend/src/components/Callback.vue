@@ -3,6 +3,14 @@
 
     <h2>CALLBACK</h2>
 
+    <div v-if="cities">
+      <p>{{cities}}</p>
+    </div>
+
+      <div v-if="genres">
+      <p>{{genres}}</p>
+    </div>
+    
     <h2>Events Data:</h2>
     <p>THIS component's spotify state: {{ spotifyStateString }}</p>
     <div v-if="localEvents">
@@ -27,16 +35,36 @@ export default {
     return {
       localEvents: null,
       playlistStatus: null,
-      spotifyStateString: null
+      spotifyStateString: null,
+      cities: null,
+      genres: null
     }
   },
   mounted () {
-    this.getLocalEvents('[78759,22032,70001]', '[rock,electronic,hip-hop]');
+    this.getAvailableCities();
+    this.getAvailableGenres();
+    this.getLocalEvents('[Austin TX,Washington DC,Nashville TN]', '[rock,electronic,hip-hop]');
   },
   methods: {
-    getLocalEvents: function (postalCodes, genres) {
-      var localEventsURL = "http://localhost:8081/localevents?postcodes=" +
-      postalCodes +
+    getAvailableCities: function() {
+      var citiesURL = "http://localhost:8081/cities";
+
+      axios.get(citiesURL)
+        .then((response => {
+          this.cities = response.data;
+        }));
+    },
+    getAvailableGenres: function() {
+      var genresURL = "http://localhost:8081/genres";
+
+      axios.get(genresURL)
+        .then((response => {
+          this.genres = response.data;
+        }));
+    },
+    getLocalEvents: function (cities, genres) {
+      var localEventsURL = "http://localhost:8081/localevents?cities=" +
+      cities +
       "&genres=" +
       genres;
 

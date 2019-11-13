@@ -5,6 +5,15 @@
 
     <h2>Events Data:</h2>
     <p>THIS component's spotify state: {{ spotifyStateString }}</p>
+
+    <div v-if="cities">
+      <p>{{cities}}</p>
+    </div>
+
+      <div v-if="genres">
+      <p>{{genres}}</p>
+    </div>
+
     <div v-if="localEvents">
 
       <button v-on:click="redirectToURL">Log In</button>
@@ -29,14 +38,34 @@ export default {
       localEvents: null,
       playlistStatus: null,
       spotifyAuthenticationUrl: null,
-      spotifyStateString: null
+      spotifyStateString: null,
+      cities: null,
+      genres: null
     }
   },
   mounted () {
+    this.getAvailableCities();
+    this.getAvailableGenres();
     this.getLocalEvents('Austin TX,Washington DC,Nashville TN', '[rock,electronic,hip-hop]');
     this.setNewSpotifyAuthenticationUrl();
   },
   methods: {
+    getAvailableCities: function() {
+      var citiesURL = "http://localhost:8081/cities";
+
+      axios.get(citiesURL)
+        .then((response => {
+          this.cities = response.data;
+        }));
+    },
+    getAvailableGenres: function() {
+      var genresURL = "http://localhost:8081/genres";
+
+      axios.get(genresURL)
+        .then((response => {
+          this.genres = response.data;
+        }));
+    },
     getLocalEvents: function (cities, genres) {
       var localEventsURL = "http://localhost:8081/localevents?cities=" +
       cities +

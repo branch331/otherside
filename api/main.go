@@ -61,6 +61,8 @@ func generateGenres() []string {
 
 //GET
 func Cities(w http.ResponseWriter, r *http.Request) {
+	enableCors(&w)
+
 	var cities []string
 	for key := range cityPostcodeMap {
 		cities = append(cities, key)
@@ -78,6 +80,7 @@ func Cities(w http.ResponseWriter, r *http.Request) {
 
 //GET
 func Genres(w http.ResponseWriter, r *http.Request) {
+	enableCors(&w)
 
 	genresJSON, err := json.Marshal(availableGenres)
 	if err != nil {
