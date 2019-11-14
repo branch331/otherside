@@ -6,18 +6,6 @@
     <h2>Events Data:</h2>
     <p>THIS component's spotify state: {{ spotifyStateString }}</p>
 
-    <ul v-if="cities">
-      <li v-for="city in cities" v-bind:key="city">
-        {{city}}
-      </li>
-    </ul>
-
-    <ul v-if="genres">
-      <li v-for="genre in genres" v-bind:key="genre">
-        {{genre}}
-      </li>
-    </ul>
-
     <div v-if="localEvents">
 
       <button v-on:click="redirectToURL">Log In</button>
@@ -43,8 +31,10 @@ export default {
       playlistStatus: null,
       spotifyAuthenticationUrl: null,
       spotifyStateString: null,
-      cities: null,
-      genres: null
+      selectedCities: null,
+      availableCities: null,
+      selectedGenres: null,
+      availableGenres: null
     }
   },
   mounted () {
@@ -54,12 +44,20 @@ export default {
     this.setNewSpotifyAuthenticationUrl();
   },
   methods: {
+    transferArrayValue: function(sourceArray, targetArray, value) {
+      var index = sourceArray.indexOf(value);
+      if (index > -1) {
+        sourceArray.splice(index, 1);
+        targetArray.push(value);
+      }
+    },
     getAvailableCities: function() {
       var citiesURL = "http://localhost:8081/cities";
 
       axios.get(citiesURL)
         .then((response => {
-          this.cities = response.data;
+          this.availableCities = response.data;
+          this.selectedCities = new Array();
         }));
     },
     getAvailableGenres: function() {
@@ -67,7 +65,8 @@ export default {
 
       axios.get(genresURL)
         .then((response => {
-          this.genres = response.data;
+          this.availableGenres = response.data;
+          this.selectedGenres = new Array();
         }));
     },
     getLocalEvents: function (cities, genres) {
