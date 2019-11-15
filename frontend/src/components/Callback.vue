@@ -34,8 +34,13 @@
     <h2>Events Data:</h2>
     <p>THIS component's spotify state: {{ spotifyStateString }}</p>
 
+    <div v-if="localEvents">
+      {{localEvents}}
+    </div>
 
-    <button v-on:click="getLocalEvents(selectedCities, selectedGenres)">Build Playlist</button>
+    <div v-if="localEvents">
+      <button v-on:click="buildPlaylist('Spooky Title', 'Spooooky Description!')">Build Playlist</button>
+    </div>
 
     <h2>Playlist Status:</h2>
     <h2 v-if="playlistStatus">{{playlistStatus}}</h2>
@@ -71,6 +76,12 @@ export default {
         sourceArray.splice(index, 1);
         targetArray.push(value);
       }
+
+      if (this.selectedCities.length != 0 && this.selectedGenres.length != 0) {
+        this.getLocalEvents(this.selectedCities, this.selectedGenres);
+      } else {
+        this.localEvents = null;
+      }
     },
     getAvailableCities: function() {
       var citiesURL = "http://localhost:8081/cities";
@@ -91,17 +102,8 @@ export default {
         }));
     },
     getLocalEvents: function (cities, genres) {
-      var cityString = '[';
-      for (var i = 0; i < cities.length; i++) {
-        cityString = cityString.concat(cities[i] + ',');
-      }
-      cityString = cityString.slice(0, -1).concat(']');
-
-      var genreString = '[';
-      for (var j = 0; j < genres.length; j++) {
-        genreString = genreString.concat(genres[j] + ',');
-      }
-      genreString = genreString.slice(0, -1).concat(']');
+      var cityString = this.arrayToQueryString(cities);
+      var genreString = this.arrayToQueryString(genres);
 
       var localEventsURL = "http://localhost:8081/localevents?cities=" +
       cityString +
@@ -111,16 +113,27 @@ export default {
       axios.get(localEventsURL)
         .then((response => {
           this.localEvents = response.data;
-          this.buildPlaylist('MY special playlist!', 'My special playlists description');
         }));
     },
+    arrayToQueryString: function (array) {
+      var queryString = '[';
+
+      for (var i = 0; i < array.length; i++) {
+        queryString = queryString.concat(array[i] + ',');
+      }
+
+      queryString = queryString.slice(0, -1).concat(']');
+      return queryString;
+    },
     buildPlaylist: function (name, desc) {
+      var topTracksURL = "http://localhost:8081/toptracks";
+
       var buildPlaylistURL = "http://localhost:8081/buildplaylist?name=" +
         name +
         "&desc=" +
         desc;
 
-      axios.post("http://localhost:8081/toptracks", JSON.stringify(this.localEvents))
+      axios.post(topTracksURL, JSON.stringify(this.localEvents))
         .then((response => {
           axios.post(buildPlaylistURL, JSON.stringify(response.data))
             .then((response => {
