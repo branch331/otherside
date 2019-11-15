@@ -35,7 +35,7 @@
     <p>THIS component's spotify state: {{ spotifyStateString }}</p>
 
 
-    <button v-on:click="buildPlaylist('MY special playlist!', 'My special playlists description')">Build Playlist</button>
+    <button v-on:click="getLocalEvents(selectedCities, selectedGenres)">Build Playlist</button>
 
     <h2>Playlist Status:</h2>
     <h2 v-if="playlistStatus">{{playlistStatus}}</h2>
@@ -113,8 +113,8 @@ export default {
 
       axios.get(localEventsURL)
         .then((response => {
-          //this.localEvents = response.data;
-          return response.data;
+          this.localEvents = response.data;
+          this.buildPlaylist('MY special playlist!', 'My special playlists description');
         }));
     },
     buildPlaylist: function (name, desc) {
@@ -123,7 +123,7 @@ export default {
         "&desc=" +
         desc;
 
-      axios.post("http://localhost:8081/toptracks", JSON.stringify(this.getLocalEvents(this.selectedCities, this.selectedGenres)))
+      axios.post("http://localhost:8081/toptracks", JSON.stringify(this.localEvents))
         .then((response => {
           axios.post(buildPlaylistURL, JSON.stringify(response.data))
             .then((response => {
