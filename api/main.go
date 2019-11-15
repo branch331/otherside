@@ -10,12 +10,13 @@ import (
 	"strings"
 	"time"
 
+	"otherside/api/redisLayer"
+
 	"github.com/gorilla/mux"
 	"github.com/zmb3/spotify"
 )
 
 var applicationPort = "8081"
-var callbackRedirectURL = "http://localhost:8080/#/callback"
 
 var cityPostcodeMap map[string]string
 var availableGenres []string
@@ -203,6 +204,7 @@ func ConfigureCallbackURL(w http.ResponseWriter, r *http.Request) {
 }
 
 //GET
+//Callback is called from the Spotify authentication flow, and redirects to <Host>/#/callback
 func Callback(w http.ResponseWriter, r *http.Request) {
 	state, ok := r.URL.Query()["state"]
 	if !ok || len(state[0]) < 1 {
@@ -211,7 +213,12 @@ func Callback(w http.ResponseWriter, r *http.Request) {
 
 	spotifyLayer.SetNewSpotifyClient(w, r, state[0])
 
-	redirectURL := callbackRedirectURL + "?state=" + state[0]
+	clientOrigin, err := redisLayer.GetKeyString(state[0])
+	if err != nil {
+		fmt.Printf("Error getting state/origin Redis key: " + err.Error())
+	}
+
+	redirectURL := clientOrigin + "/#/callback?state=" + state[0]
 
 	http.Redirect(w, r, redirectURL, http.StatusSeeOther)
 }
@@ -225,8 +232,12 @@ func Authenticate(w http.ResponseWriter, r *http.Request) {
 		fmt.Printf("State parameter missing from authenticate request.")
 	}
 
-	authenticationUrl := spotifyLayer.ObtainAuthenticationURL(state[0])
+	err := redisLayer.SetKeyString(state[0], r.Header.Get("Origin"))
+	if err != nil {
+		fmt.Printf("Error setting state/origin Redis key: " + err.Error())
+	}
 
+	authenticationUrl := spotifyLayer.ObtainAuthenticationURL(state[0])
 	fmt.Fprint(w, authenticationUrl)
 }
 

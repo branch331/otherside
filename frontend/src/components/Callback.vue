@@ -103,9 +103,6 @@ export default {
       }
       genreString = genreString.slice(0, -1).concat(']');
 
-      alert(cityString);
-      alert(genreString);
-
       var localEventsURL = "http://localhost:8081/localevents?cities=" +
       cityString +
       "&genres=" +
