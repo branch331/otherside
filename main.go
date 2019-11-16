@@ -143,15 +143,28 @@ func TopTracks(w http.ResponseWriter, r *http.Request) {
 
 	err := json.NewDecoder(r.Body).Decode(&localSeatGeekEvents)
 	if err != nil {
-		fmt.Printf("Error decoding Spotify Top Tracks: " + err.Error())
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte("Error decoding Spotify Top Tracks: " + err.Error()))
 	}
 
 	t4 := time.Now()
 	for _, event := range localSeatGeekEvents {
 		for _, performer := range event.Performers {
-			artistID := spotifyLayer.SearchAndFindSpotifyArtistID(performer)
+			artistID, err := spotifyLayer.SearchAndFindSpotifyArtistID(performer)
+			if err != nil {
+				w.Header().Set("Content-Type", "application/json")
+				w.WriteHeader(http.StatusInternalServerError)
+				w.Write([]byte(fmt.Sprintf("Error searching for spotify artist %s: "+err.Error(), performer)))
+			}
 			if artistID != "" {
-				topTracks = append(topTracks, spotifyLayer.GetTopSpotifyArtistTrack(artistID))
+				topArtistTrack, err := spotifyLayer.GetTopSpotifyArtistTrack(artistID)
+				if err != nil {
+					w.Header().Set("Content-Type", "application/json")
+					w.WriteHeader(http.StatusInternalServerError)
+					w.Write([]byte(fmt.Sprintf("Error getting top track for spotify artist id %s: "+err.Error(), string(artistID))))
+				}
+				topTracks = append(topTracks, topArtistTrack)
 			}
 		}
 	}
@@ -159,7 +172,9 @@ func TopTracks(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("[Time benchmark] Top tracks " + time.Since(t4).String())
 	topTracksJSON, err := json.Marshal(topTracks)
 	if err != nil {
-		fmt.Printf("Error Marshalling Spotify top tracks: " + err.Error())
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(fmt.Sprintf("Error marshaling spotify top tracks")))
 	} else {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
@@ -173,24 +188,44 @@ func BuildPlaylist(w http.ResponseWriter, r *http.Request) {
 
 	playlistName, ok := r.URL.Query()["name"]
 	if !ok || len(playlistName[0]) < 1 {
-		fmt.Printf("playlistName parameter missing from buildplaylist request.")
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte("Playlist 'name' parameter missing from buildplaylist request."))
 	}
 
 	playlistDesc, ok := r.URL.Query()["desc"]
 	if !ok || len(playlistDesc[0]) < 1 {
-		fmt.Printf("playlistDesc parameter missing from buildplaylist request.")
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte("Playlist 'desc' parameter missing from buildplaylist request."))
 	}
 
 	var topTracks []spotify.FullTrack
 
 	err := json.NewDecoder(r.Body).Decode(&topTracks)
 	if err != nil {
-		fmt.Printf("Error decoding Spotify Top Tracks: " + err.Error())
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte("Error decoding Spotify Top Tracks: " + err.Error()))
 	}
 
-	playlistID := spotifyLayer.GeneratePlayList(playlistName[0], playlistDesc[0])
+	playlistID, err := spotifyLayer.GeneratePlayList(playlistName[0], playlistDesc[0])
+	if err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte("Error generating playlist: " + err.Error()))
+	}
 
-	spotifyLayer.AddTracksToPlaylist(playlistID, topTracks)
+	err = spotifyLayer.AddTracksToPlaylist(playlistID, topTracks)
+	if err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte("Error adding tracks to playlist: " + err.Error()))
+	} else {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("Playlist generated."))
+	}
 }
 
 //POST
