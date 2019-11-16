@@ -68,15 +68,19 @@ func GetTopSpotifyArtistTrack(artistID spotify.ID) (spotify.FullTrack, error) {
 	topTracks, err := spotifyClient.GetArtistsTopTracks(artistID, "US")
 	if err != nil {
 		fmt.Printf("Can't obtain artist %s top tracks: "+err.Error(), string(artistID))
-		return topTracks[0], nil
+		return cachedTopTrack, err
 	} else {
-		serializedTopTrack, err := json.Marshal(topTracks[0])
-		if err != nil {
-			fmt.Printf("Can't marshal artist %s top tracks: "+err.Error(), string(artistID))
+		if len(topTracks) > 0 {
+			serializedTopTrack, err := json.Marshal(topTracks[0])
+			if err != nil {
+				fmt.Printf("Can't marshal artist %s top tracks: "+err.Error(), string(artistID))
+			}
+	
+			redisLayer.SetArtistTopTrack(string(artistID), serializedTopTrack)
+			return topTracks[0], nil
+		} else {
+			return cachedTopTrack, nil
 		}
-
-		redisLayer.SetArtistTopTrack(string(artistID), serializedTopTrack)
-		return topTracks[0], nil
 	}
 }
 

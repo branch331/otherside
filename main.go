@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"otherside/api/seatgeekLayer"
 	"otherside/api/spotifyLayer"
+	"reflect"
 	"strings"
 	"time"
 
@@ -15,6 +16,12 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/zmb3/spotify"
 )
+
+type TopTrackResponse struct {
+	Track        spotify.FullTrack
+	ArtistExists bool
+	err          error
+}
 
 var applicationPort = "8081"
 
@@ -148,27 +155,42 @@ func TopTracks(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("Error decoding Spotify Top Tracks: " + err.Error()))
 	}
 
+	var topTrackChannels []chan TopTrackResponse
+
 	t4 := time.Now()
 	for _, event := range localSeatGeekEvents {
 		for _, performer := range event.Performers {
-			artistID, err := spotifyLayer.SearchAndFindSpotifyArtistID(performer)
-			if err != nil {
-				w.Header().Set("Content-Type", "application/json")
-				w.WriteHeader(http.StatusInternalServerError)
-				w.Write([]byte(fmt.Sprintf("Error searching for spotify artist %s: "+err.Error(), performer)))
-			}
-			if artistID != "" {
-				topArtistTrack, err := spotifyLayer.GetTopSpotifyArtistTrack(artistID)
-				if err != nil {
-					w.Header().Set("Content-Type", "application/json")
-					w.WriteHeader(http.StatusInternalServerError)
-					w.Write([]byte(fmt.Sprintf("Error getting top track for spotify artist id %s: "+err.Error(), string(artistID))))
-				}
-				topTracks = append(topTracks, topArtistTrack)
+			topTrackChan := make(chan TopTrackResponse)
+			topTrackChannels = append(topTrackChannels, topTrackChan)
+			go GetArtistTopTrack(performer, topTrackChan)
+		}
+	}
+	cases := make([]reflect.SelectCase, len(topTrackChannels))
+
+	for i, topTrackChan := range topTrackChannels {
+		cases[i] = reflect.SelectCase{Dir: reflect.SelectRecv, Chan: reflect.ValueOf(topTrackChan)}
+	}
+	remainingCases := len(cases)
+
+	for remainingCases > 0 {
+		chosen, value, ok := reflect.Select(cases)
+		if !ok {
+			//Channel has been closed; zero out channel to disable the case
+			cases[chosen].Chan = reflect.ValueOf(nil)
+			remainingCases--
+			continue
+		}
+		response := value.Interface().(TopTrackResponse)
+		if response.err != nil {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte("Error getting top track for spotify artist: " + err.Error()))
+		} else {
+			if response.ArtistExists {
+				topTracks = append(topTracks, response.Track)
 			}
 		}
 	}
-
 	fmt.Println("[Time benchmark] Top tracks " + time.Since(t4).String())
 	topTracksJSON, err := json.Marshal(topTracks)
 	if err != nil {
@@ -179,6 +201,31 @@ func TopTracks(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
 		w.Write(topTracksJSON)
+	}
+}
+
+func GetArtistTopTrack(performer string, topTrackChan chan<- TopTrackResponse) {
+	var response TopTrackResponse
+
+	artistID, err := spotifyLayer.SearchAndFindSpotifyArtistID(performer)
+	if err != nil {
+		response.err = err
+		topTrackChan <- response
+		close(topTrackChan)
+	} else {
+		if artistID != "" {
+			topArtistTrack, err := spotifyLayer.GetTopSpotifyArtistTrack(artistID)
+			response.Track = topArtistTrack
+			response.ArtistExists = true
+			response.err = err
+			topTrackChan <- response
+			close(topTrackChan)
+		} else {
+			response.ArtistExists = false
+			response.err = nil
+			topTrackChan <- response
+			close(topTrackChan)
+		}
 	}
 }
 
