@@ -183,7 +183,6 @@ func MakeSeatgeekEventsRequest(baseURL string, postCode string, seatGeekChan cha
 
 	eventsFromResponse := responseData["events"].([]interface{})
 	seatGeekEvents := make([]SeatGeekEvent, len(eventsFromResponse))
-	genreChannels := make([][]chan []string, len(eventsFromResponse))
 
 	for i, event := range eventsFromResponse {
 		eventData := event.(map[string]interface{})
@@ -202,8 +201,6 @@ func MakeSeatgeekEventsRequest(baseURL string, postCode string, seatGeekChan cha
 
 		for _, performer := range performersArray {
 			performerData := performer.(map[string]interface{})
-			channel := make(chan []string)
-			genreChannels[i] = append(genreChannels[i], channel)
 
 			seatGeekEvents[i].Performers = append(seatGeekEvents[i].Performers, performerData["short_name"].(string))
 

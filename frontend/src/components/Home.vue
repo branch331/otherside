@@ -6,9 +6,10 @@
     <h2>Events Data:</h2>
     <p>THIS component's spotify state: {{ spotifyStateString }}</p>
 
-    <div v-if="localEvents">
 
       <button v-on:click="redirectToURL">Log In</button>
+
+    <div v-if="localEvents">
 
       <p>{{localEvents}}</p>
 
@@ -40,7 +41,7 @@ export default {
   mounted () {
     this.getAvailableCities();
     this.getAvailableGenres();
-    this.getLocalEvents('Austin TX,Washington DC,Nashville TN', '[rock,electronic,hip-hop]');
+    //this.getLocalEvents('Austin TX,Washington DC,Nashville TN', '[rock,electronic,hip-hop]');
     this.setNewSpotifyAuthenticationUrl();
   },
   methods: {

@@ -162,7 +162,7 @@ func Ping() {
 func newPool() *redis.Pool {
 	return &redis.Pool{
 		MaxIdle:   3,
-		MaxActive: 10,
+		MaxActive: 2000,
 		Dial: func() (redis.Conn, error) {
 			c, err := redis.Dial("tcp", ":6379")
 			if err != nil {
