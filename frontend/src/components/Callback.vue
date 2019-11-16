@@ -137,7 +137,7 @@ export default {
         .then((response => {
           axios.post(buildPlaylistURL, JSON.stringify(response.data))
             .then((response => {
-              this.playlistStatus = response.data;
+              this.playlistStatus = response.status;
           }));
       }));
     }
