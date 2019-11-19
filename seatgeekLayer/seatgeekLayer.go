@@ -181,47 +181,53 @@ func MakeSeatgeekEventsRequest(baseURL string, postCode string, seatGeekChan cha
 		fmt.Printf("Error with SeatGeek response unmarshalling: " + err.Error())
 	}
 
-	eventsFromResponse := responseData["events"].([]interface{})
-	seatGeekEvents := make([]SeatGeekEvent, len(eventsFromResponse))
+	if responseData["events"] == nil {
+		seatGeekChan <- nil
+		redisLayer.SetSeatgeekEvents(postCode, nil)
+		close(seatGeekChan)
+	} else {
+		eventsFromResponse := responseData["events"].([]interface{})
+		seatGeekEvents := make([]SeatGeekEvent, len(eventsFromResponse))
 
-	for i, event := range eventsFromResponse {
-		eventData := event.(map[string]interface{})
+		for i, event := range eventsFromResponse {
+			eventData := event.(map[string]interface{})
 
-		seatGeekEvents[i].Title = eventData["title"].(string)
-		seatGeekEvents[i].EventType = eventData["type"].(string)
-		seatGeekEvents[i].LocalShowtime = eventData["datetime_local"].(string)
+			seatGeekEvents[i].Title = eventData["title"].(string)
+			seatGeekEvents[i].EventType = eventData["type"].(string)
+			seatGeekEvents[i].LocalShowtime = eventData["datetime_local"].(string)
 
-		venueData := eventData["venue"].(map[string]interface{})
+			venueData := eventData["venue"].(map[string]interface{})
 
-		seatGeekEvents[i].VenueName = venueData["name"].(string)
-		seatGeekEvents[i].VenueLocation = venueData["display_location"].(string)
-		seatGeekEvents[i].URL = venueData["url"].(string)
+			seatGeekEvents[i].VenueName = venueData["name"].(string)
+			seatGeekEvents[i].VenueLocation = venueData["display_location"].(string)
+			seatGeekEvents[i].URL = venueData["url"].(string)
 
-		performersArray := eventData["performers"].([]interface{})
+			performersArray := eventData["performers"].([]interface{})
 
-		for _, performer := range performersArray {
-			performerData := performer.(map[string]interface{})
+			for _, performer := range performersArray {
+				performerData := performer.(map[string]interface{})
 
-			seatGeekEvents[i].Performers = append(seatGeekEvents[i].Performers, performerData["short_name"].(string))
+				seatGeekEvents[i].Performers = append(seatGeekEvents[i].Performers, performerData["short_name"].(string))
 
-			if performerData["genres"] != nil {
-				genreArray := performerData["genres"].([]interface{})
+				if performerData["genres"] != nil {
+					genreArray := performerData["genres"].([]interface{})
 
-				for _, genre := range genreArray {
-					genreData := genre.(map[string]interface{})
-					seatGeekEvents[i].Genres = append(seatGeekEvents[i].Genres, genreData["slug"].(string))
+					for _, genre := range genreArray {
+						genreData := genre.(map[string]interface{})
+						seatGeekEvents[i].Genres = append(seatGeekEvents[i].Genres, genreData["slug"].(string))
+					}
 				}
 			}
 		}
+
+		seatGeekEventsSerialized, err := json.Marshal(seatGeekEvents)
+		if err != nil {
+			fmt.Printf("Error marshalling seatgeek events data: " + err.Error())
+		}
+
+		redisLayer.SetSeatgeekEvents(postCode, seatGeekEventsSerialized)
+
+		seatGeekChan <- seatGeekEvents
+		close(seatGeekChan)
 	}
-
-	seatGeekEventsSerialized, err := json.Marshal(seatGeekEvents)
-	if err != nil {
-		fmt.Printf("Error marshalling seatgeek events data: " + err.Error())
-	}
-
-	redisLayer.SetSeatgeekEvents(postCode, seatGeekEventsSerialized)
-
-	seatGeekChan <- seatGeekEvents
-	close(seatGeekChan)
 }
