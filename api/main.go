@@ -58,10 +58,24 @@ func generateCityPostcodeMap() map[string]string {
 func generateGenres() []string {
 	genres := []string{
 		"rock",
+		"hard-rock",
 		"indie",
 		"hip-hop",
 		"jazz",
 		"pop",
+		"soul",
+		"rnb",
+		"alternative",
+		"classic-rock",
+		"country",
+		"folk",
+		"punk",
+		"electronic",
+		"blues",
+		"techno",
+		"rap",
+		"latin",
+		"classical",
 	}
 
 	return genres
