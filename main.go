@@ -23,6 +23,11 @@ type TopTrackResponse struct {
 	err          error
 }
 
+type ArtistIDResponse struct {
+	ID  spotify.ID
+	err error
+}
+
 var applicationPort = "8081"
 
 var cityPostcodeMap map[string]string
@@ -39,6 +44,7 @@ func main() {
 	router.HandleFunc("/callback", Callback)
 	router.HandleFunc("/localevents", LocalEvents)
 	router.HandleFunc("/toptracks", TopTracks).Methods("POST")
+	router.HandleFunc("/artistids", ArtistIDs).Methods("POST")
 	router.HandleFunc("/buildplaylist", BuildPlaylist).Methods("POST")
 
 	log.Fatal(http.ListenAndServe(":"+applicationPort, router))
@@ -181,28 +187,89 @@ func QueryStringToArray(queryString string) []string {
 }
 
 //POST
-func TopTracks(w http.ResponseWriter, r *http.Request) {
+func ArtistIDs(w http.ResponseWriter, r *http.Request) {
 	enableCors(&w)
+	time.Sleep(200 * time.Millisecond)
 
 	var localSeatGeekEvents []seatgeekLayer.SeatGeekEvent
-	var topTracks []spotify.FullTrack
+	var artistIDs []spotify.ID
 
 	err := json.NewDecoder(r.Body).Decode(&localSeatGeekEvents)
 	if err != nil {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte("Error decoding Spotify Top Tracks: " + err.Error()))
+		w.Write([]byte("Error decoding local seatgeek events: " + err.Error()))
+	}
+
+	var artistChannels []chan ArtistIDResponse
+
+	t4 := time.Now()
+	for _, event := range localSeatGeekEvents {
+		for _, performer := range event.Performers {
+			artistChan := make(chan ArtistIDResponse)
+			artistChannels = append(artistChannels, artistChan)
+			go GetArtistID(performer, artistChan)
+		}
+	}
+	cases := make([]reflect.SelectCase, len(artistChannels))
+
+	for i, artistChan := range artistChannels {
+		cases[i] = reflect.SelectCase{Dir: reflect.SelectRecv, Chan: reflect.ValueOf(artistChan)}
+	}
+	remainingCases := len(cases)
+
+	for remainingCases > 0 {
+		chosen, value, ok := reflect.Select(cases)
+		if !ok {
+			//Channel has been closed; zero out channel to disable the case
+			cases[chosen].Chan = reflect.ValueOf(nil)
+			remainingCases--
+			continue
+		}
+		response := value.Interface().(ArtistIDResponse)
+		if response.err != nil {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte("Error getting artist ID for spotify artist: " + err.Error() + "\n"))
+		} else {
+			artistIDs = append(artistIDs, response.ID)
+		}
+	}
+	fmt.Println("[Time benchmark] Artist IDs " + time.Since(t4).String())
+	artistIDJSON, err := json.Marshal(artistIDs)
+	if err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(fmt.Sprintf("Error marshaling spotify artist IDs")))
+	} else {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		w.Write(artistIDJSON)
+	}
+}
+
+//POST
+func TopTracks(w http.ResponseWriter, r *http.Request) {
+	enableCors(&w)
+	time.Sleep(200 * time.Millisecond)
+
+	var artistIDs []spotify.ID
+	var topTracks []spotify.FullTrack
+
+	err := json.NewDecoder(r.Body).Decode(&artistIDs)
+	if err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte("Error decoding Spotify Artist IDs: " + err.Error() + "\n"))
 	}
 
 	var topTrackChannels []chan TopTrackResponse
 
 	t4 := time.Now()
-	for _, event := range localSeatGeekEvents {
-		for _, performer := range event.Performers {
-			topTrackChan := make(chan TopTrackResponse)
-			topTrackChannels = append(topTrackChannels, topTrackChan)
-			go GetArtistTopTrack(performer, topTrackChan)
-		}
+	for _, ID := range artistIDs {
+		topTrackChan := make(chan TopTrackResponse)
+		topTrackChannels = append(topTrackChannels, topTrackChan)
+		go GetArtistTopTrack(ID, topTrackChan)
 	}
 	cases := make([]reflect.SelectCase, len(topTrackChannels))
 
@@ -243,28 +310,37 @@ func TopTracks(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func GetArtistTopTrack(performer string, topTrackChan chan<- TopTrackResponse) {
-	var response TopTrackResponse
+func GetArtistID(performer string, artistChan chan<- ArtistIDResponse) {
+	var response ArtistIDResponse
 
 	artistID, err := spotifyLayer.SearchAndFindSpotifyArtistID(performer)
 	if err != nil {
 		response.err = err
+		artistChan <- response
+		close(artistChan)
+	} else {
+		response.ID = artistID
+		response.err = err
+		artistChan <- response
+		close(artistChan)
+	}
+}
+
+func GetArtistTopTrack(artistID spotify.ID, topTrackChan chan<- TopTrackResponse) {
+	var response TopTrackResponse
+
+	if artistID != "" {
+		topArtistTrack, err := spotifyLayer.GetTopSpotifyArtistTrack(artistID)
+		response.Track = topArtistTrack
+		response.ArtistExists = true
+		response.err = err
 		topTrackChan <- response
 		close(topTrackChan)
 	} else {
-		if artistID != "" {
-			topArtistTrack, err := spotifyLayer.GetTopSpotifyArtistTrack(artistID)
-			response.Track = topArtistTrack
-			response.ArtistExists = true
-			response.err = err
-			topTrackChan <- response
-			close(topTrackChan)
-		} else {
-			response.ArtistExists = false
-			response.err = nil
-			topTrackChan <- response
-			close(topTrackChan)
-		}
+		response.ArtistExists = false
+		response.err = nil
+		topTrackChan <- response
+		close(topTrackChan)
 	}
 }
 
