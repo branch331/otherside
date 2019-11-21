@@ -176,7 +176,6 @@ func LocalEvents(w http.ResponseWriter, r *http.Request) {
 }
 
 func QueryStringToArray(queryString string) []string {
-
 	testsArray := strings.Split(strings.Trim(queryString, "[]"), ",")
 	return testsArray
 }

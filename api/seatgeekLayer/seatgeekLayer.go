@@ -60,8 +60,6 @@ func FindLocalEvents(postalCodes []string, genres []string) []SeatGeekEvent {
 		}
 
 		if postCodeAlreadyCached {
-			fmt.Println("NOT expired!!")
-
 			redisData, err := redisLayer.GetSeatgeekEvents(postCode)
 
 			if err != nil {

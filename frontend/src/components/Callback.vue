@@ -38,7 +38,11 @@
       {{localEvents}}
     </div>
 
-    <div v-if="localEvents">
+    <div v-if="topTracks">
+      {{topTracks.length}}
+    </div>
+
+    <div v-if="topTracks">
       <button v-on:click="buildPlaylist('Spooky Title', 'Spooooky Description!')">Build Playlist</button>
     </div>
 
@@ -61,7 +65,8 @@ export default {
       selectedCities: null,
       availableCities: null,
       selectedGenres: null,
-      availableGenres: null
+      availableGenres: null,
+      topTracks: null
     }
   },
   mounted () {
@@ -73,8 +78,11 @@ export default {
     transferArrayValue: function(sourceArray, targetArray, value) {
       var index = sourceArray.indexOf(value);
       if (index > -1) {
-        sourceArray.splice(index, 1);
-        targetArray.push(value);
+        if (!(targetArray == this.selectedCities && targetArray.length == 6) && 
+        !(targetArray == this.selectedGenres && targetArray.length == 10)) {
+          sourceArray.splice(index, 1);
+          targetArray.push(value);
+        }
       }
 
       if (this.selectedCities.length != 0 && this.selectedGenres.length != 0) {
@@ -113,6 +121,7 @@ export default {
       axios.get(localEventsURL)
         .then((response => {
           this.localEvents = response.data;
+          this.getTopTracks(this.localEvents);
         }));
     },
     arrayToQueryString: function (array) {
@@ -125,21 +134,24 @@ export default {
       queryString = queryString.slice(0, -1).concat(']');
       return queryString;
     },
-    buildPlaylist: function (name, desc) {
+    getTopTracks: function(events) {
       var topTracksURL = "http://localhost:8081/toptracks";
 
+      axios.post(topTracksURL, JSON.stringify(events))
+        .then((response => {
+          this.topTracks = response.data;
+        }));
+    },
+    buildPlaylist: function (name, desc) {
       var buildPlaylistURL = "http://localhost:8081/buildplaylist?name=" +
         name +
         "&desc=" +
         desc;
 
-      axios.post(topTracksURL, JSON.stringify(this.localEvents))
-        .then((response => {
-          axios.post(buildPlaylistURL, JSON.stringify(response.data))
-            .then((response => {
-              this.playlistStatus = response.status;
-          }));
-      }));
+        axios.post(buildPlaylistURL, JSON.stringify(this.topTracks))
+          .then((response => {
+            this.playlistStatus = response.status;
+        }));
     }
   }
 }
