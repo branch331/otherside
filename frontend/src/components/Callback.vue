@@ -42,7 +42,7 @@
       {{topTracks.length}}
     </div>
 
-    <div v-if="topTracks">
+    <div v-if="artistIDs">
       <button v-on:click="buildPlaylist('Spooky Title', 'Spooooky Description!')">Build Playlist</button>
     </div>
 
@@ -66,7 +66,8 @@ export default {
       availableCities: null,
       selectedGenres: null,
       availableGenres: null,
-      topTracks: null
+      topTracks: null,
+      artistIDs: null
     }
   },
   mounted () {
@@ -121,7 +122,7 @@ export default {
       axios.get(localEventsURL)
         .then((response => {
           this.localEvents = response.data;
-          this.getTopTracks(this.localEvents);
+          this.getArtistIDs(this.localEvents);
         }));
     },
     arrayToQueryString: function (array) {
@@ -134,23 +135,28 @@ export default {
       queryString = queryString.slice(0, -1).concat(']');
       return queryString;
     },
-    getTopTracks: function(events) {
-      var topTracksURL = "http://localhost:8081/toptracks";
+    getArtistIDs: function(events) {
+      var artistIDsURL = "http://localhost:8081/artistids";
 
-      axios.post(topTracksURL, JSON.stringify(events))
+      axios.post(artistIDsURL, JSON.stringify(events))
         .then((response => {
-          this.topTracks = response.data;
+          this.artistIDs = response.data;
         }));
     },
     buildPlaylist: function (name, desc) {
+      var topTracksURL = "http://localhost:8081/toptracks";
       var buildPlaylistURL = "http://localhost:8081/buildplaylist?name=" +
         name +
         "&desc=" +
         desc;
 
-        axios.post(buildPlaylistURL, JSON.stringify(this.topTracks))
-          .then((response => {
-            this.playlistStatus = response.status;
+      axios.post(topTracksURL, JSON.stringify(this.artistIDs))
+        .then((response => {
+          this.topTracks = response.data;
+          axios.post(buildPlaylistURL, JSON.stringify(response.data))
+            .then((response => {
+              this.playlistStatus = response.status;
+        }));
         }));
     }
   }
