@@ -43,13 +43,13 @@ func SetNewSpotifyClient(w http.ResponseWriter, r *http.Request, state string) e
 func GetTopSpotifyArtistTrack(artistID spotify.ID) (spotify.FullTrack, error) {
 	var cachedTopTrack spotify.FullTrack
 
-	artistIDAlreadyCached, err := redisLayer.Exists(string(artistID))
+	topTrackAlreadyCached, err := redisLayer.Exists(string(artistID))
 	if err != nil {
 		fmt.Printf("Couldn't check if artistID %s exists in Redis: "+err.Error(), string(artistID))
 		return cachedTopTrack, err
 	}
 
-	if artistIDAlreadyCached {
+	if topTrackAlreadyCached {
 		redisData, err := redisLayer.GetArtistTopTrack(string(artistID))
 		if err != nil {
 			fmt.Printf("Couldn't get value for artistID key %s in Redis: "+err.Error(), string(artistID))
@@ -75,7 +75,7 @@ func GetTopSpotifyArtistTrack(artistID spotify.ID) (spotify.FullTrack, error) {
 			if err != nil {
 				fmt.Printf("Can't marshal artist %s top tracks: "+err.Error(), string(artistID))
 			}
-	
+
 			redisLayer.SetArtistTopTrack(string(artistID), serializedTopTrack)
 			return topTracks[0], nil
 		} else {
