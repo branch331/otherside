@@ -415,7 +415,7 @@ func Callback(w http.ResponseWriter, r *http.Request) {
 		fmt.Printf("Error getting state/origin Redis key: " + err.Error())
 	}
 
-	redirectURL := clientOrigin + "/#/callback?state=" + state[0]
+	redirectURL := clientOrigin + "/#/?state=" + state[0]
 
 	http.Redirect(w, r, redirectURL, http.StatusSeeOther)
 }
