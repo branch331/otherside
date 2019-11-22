@@ -3,7 +3,15 @@
 
     <h2>HOME</h2>
 
+    <div v-if="!isStateStringCorrect">
       <button v-on:click="redirectToURL">Log In</button>
+    </div>
+    
+    <div v-if="isStateStringCorrect">
+      <div v-if="artistIDs">
+        <button v-on:click="buildPlaylist('Spooky Title', 'Spooooky Description!')">Build Playlist</button>
+      </div>
+    </div>
 
       <p>state string {{stateString}}</p>
 
@@ -43,10 +51,6 @@
 
     <div v-if="topTracks">
       {{topTracks.length}}
-    </div>
-
-    <div v-if="artistIDs">
-      <button v-on:click="buildPlaylist('Spooky Title', 'Spooooky Description!')">Build Playlist</button>
     </div>
 
     <h2>Playlist Status:</h2>
@@ -104,7 +108,8 @@ export default {
       playlistStatus: null,
       spotifyAuthenticationUrl: null,
       topTracks: null,
-      artistIDs: null
+      artistIDs: null,
+      isStateStringCorrect: null
     }
   },
   computed: {
@@ -156,7 +161,8 @@ export default {
     this.initializeStore();
     if (this.$route.query.state == null) {
       this.setNewSpotifyAuthenticationUrl();
-    }
+    } 
+    this.isStateStringCorrect = this.$route.query.state == this.stateString;
   },
   methods: {
     initializeStore: function() {
