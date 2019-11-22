@@ -29,7 +29,7 @@ type ArtistIDResponse struct {
 }
 
 var applicationPort = "8081"
-
+var timeToday seatgeekLayer.TimeToday
 var cityPostcodeMap map[string]string
 var availableGenres []string
 
@@ -169,7 +169,7 @@ func LocalEvents(w http.ResponseWriter, r *http.Request) {
 		postCodeArray = append(postCodeArray, cityPostcodeMap[val])
 	}
 
-	localSeatGeekEvents := seatgeekLayer.FindLocalEvents(postCodeArray, genreArray)
+	localSeatGeekEvents := seatgeekLayer.FindLocalEvents(postCodeArray, genreArray, timeToday)
 
 	localSeatGeekEventsJSON, err := json.Marshal(localSeatGeekEvents)
 	if err != nil {
@@ -424,13 +424,23 @@ func Callback(w http.ResponseWriter, r *http.Request) {
 func Authenticate(w http.ResponseWriter, r *http.Request) {
 	enableCors(&w)
 
+	UTCTimeLocation, err := time.LoadLocation("UTC")
+	if err != nil {
+		fmt.Printf("Error creating time LoadLocation: " + err.Error())
+	}
+
+	if timeToday.EndOfDay.Sub(time.Now().In(UTCTimeLocation)) < 0 {
+		redisLayer.FlushDb()
+		timeToday = seatgeekLayer.GetTimeToday(UTCTimeLocation)
+	}
+
 	state, ok := r.URL.Query()["state"]
 	if !ok || len(state[0]) < 1 {
 		fmt.Printf("State parameter missing from authenticate request.")
 	}
 
-	err := redisLayer.SetKeyString(state[0], r.Header.Get("Origin"))
-	if err != nil {
+	redisErr := redisLayer.SetKeyString(state[0], r.Header.Get("Origin"))
+	if redisErr != nil {
 		fmt.Printf("Error setting state/origin Redis key: " + err.Error())
 	}
 

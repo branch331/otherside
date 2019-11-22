@@ -5,6 +5,8 @@
 
       <button v-on:click="redirectToURL">Log In</button>
 
+      <p>state string {{stateString}}</p>
+
     <h5>Selected Cities</h5>
     <ul v-if="selectedCities">
       <li v-for="city in selectedCities" v-bind:key="city" v-on:click="transferArrayValue(selectedCities, availableCities, city)">
@@ -34,7 +36,6 @@
     </ul>
 
     <h2>Events Data:</h2>
-    <p>THIS component's spotify state: {{ spotifyStateString }}</p>
 
     <div v-if="localEvents">
       {{localEvents}}
@@ -66,7 +67,8 @@ const state = {
   selectedCities: null,
   selectedGenres: null,
   availableCities: null,
-  availableGenres: null
+  availableGenres: null,
+  stateString: null,
 };
 
 const mutations = {
@@ -82,6 +84,9 @@ const mutations = {
   UPDATE_AVAILABLE_GENRES(state, payload) {
     state.availableGenres = payload;
   },
+  UPDATE_STATE_STRING(state, newValue) {
+    state.stateString = newValue;
+  }
 };
 
 const store = new Vuex.Store({
@@ -98,7 +103,6 @@ export default {
       localEvents: null,
       playlistStatus: null,
       spotifyAuthenticationUrl: null,
-      spotifyStateString: null,
       topTracks: null,
       artistIDs: null
     }
@@ -135,14 +139,24 @@ export default {
       set: function(newValue) {
         store.commit("UPDATE_AVAILABLE_GENRES", newValue);
       }
+    },
+    stateString: {
+      get: function() {
+        return store.state.stateString;
+      },
+      set: function(newValue) {
+        store.commit("UPDATE_STATE_STRING", newValue);
+      }
     }
   },
   mounted () {
-    this.setNewSpotifyAuthenticationUrl();
     if (this.selectedCities != null && this.selectedGenres != null) {
       this.getLocalEvents(this.selectedCities, this.selectedGenres);
     }
     this.initializeStore();
+    if (this.$route.query.state == null) {
+      this.setNewSpotifyAuthenticationUrl();
+    }
   },
   methods: {
     initializeStore: function() {
@@ -229,14 +243,16 @@ export default {
       axios.get(localEventsURL)
         .then((response => {
           this.localEvents = response.data;
-          this.getArtistIDs(this.localEvents);
+          if (this.$route.query.state == this.stateString) { //User has logged in successfully
+            this.getArtistIDs(this.localEvents);
+          }
         }));
     },
     setNewSpotifyAuthenticationUrl: function() {
-      this.spotifyStateString = this.getRandomStateString()
+      this.stateString = this.getRandomStateString()
 
       var getAuthenticationRequestUrl = "http://localhost:8081/authenticate?state="
-      +  this.spotifyStateString;
+      +  this.stateString;
 
       axios.get(getAuthenticationRequestUrl)
         .then(response => {

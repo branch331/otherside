@@ -30,24 +30,12 @@ type TimeToday struct {
 }
 
 var SEATGEEK_ID = os.Getenv("SEATGEEK_ID")
-var requestExpirationTime time.Time
-var timeToday TimeToday
 
 //FindLocalEvents makes a request to the SeatGeek Events API using the postal code and range,
 //and returns an array of SeatGeekEvents.
-func FindLocalEvents(postalCodes []string, genres []string) []SeatGeekEvent {
+func FindLocalEvents(postalCodes []string, genres []string, timeToday TimeToday) []SeatGeekEvent {
 
 	t4 := time.Now()
-
-	UTCTimeLocation, err := time.LoadLocation("UTC")
-	if err != nil {
-		fmt.Printf("Error creating time LoadLocation: " + err.Error())
-	}
-
-	if timeToday.EndOfDay.Sub(time.Now().In(UTCTimeLocation)) < 0 {
-		redisLayer.FlushDb()
-		timeToday = getTimeToday(UTCTimeLocation)
-	}
 
 	var seatGeekEventChannels []chan []SeatGeekEvent
 	var seatGeekEvents []SeatGeekEvent
@@ -81,7 +69,7 @@ func FindLocalEvents(postalCodes []string, genres []string) []SeatGeekEvent {
 
 			seatGeekChan := make(chan []SeatGeekEvent)
 			seatGeekEventChannels = append(seatGeekEventChannels, seatGeekChan)
-			go MakeSeatgeekEventsRequest(BaseSeatGeekLocalEventsURL, postCode, seatGeekChan)
+			go MakeSeatgeekEventsRequest(BaseSeatGeekLocalEventsURL, postCode, timeToday, seatGeekChan)
 		}
 	}
 
@@ -107,20 +95,6 @@ func FindLocalEvents(postalCodes []string, genres []string) []SeatGeekEvent {
 
 	fmt.Println("[Time benchmark] Makin slow calls " + time.Since(t4).String())
 	return FilterByGenres(seatGeekEvents, genres)
-}
-
-func getTimeToday(loc *time.Location) TimeToday {
-	var timeToday TimeToday
-
-	currentTime := time.Now().In(loc)
-
-	timeBeginningOfDay := time.Date(currentTime.Year(), currentTime.Month(), currentTime.Day(), 0, 0, 0, 0, loc)
-	timeEndOfDay := timeBeginningOfDay.Add(24 * time.Hour)
-
-	timeToday.BeginningOfDay = timeBeginningOfDay
-	timeToday.EndOfDay = timeEndOfDay
-
-	return timeToday
 }
 
 //FilterByGenres returns an array of SeatGeekEvent items containing only the genres listed
@@ -149,7 +123,7 @@ func stringInSlice(stringToFind string, list []string) bool {
 }
 
 //MakeSeatgeekEventsRequest performs an HTTP request to obtain a single page of event information for an area
-func MakeSeatgeekEventsRequest(baseURL string, postCode string, seatGeekChan chan<- []SeatGeekEvent) {
+func MakeSeatgeekEventsRequest(baseURL string, postCode string, timeToday TimeToday, seatGeekChan chan<- []SeatGeekEvent) {
 
 	SeatGeekLocalMusicEventsURL := baseURL +
 		"&geoip=" +
@@ -228,4 +202,18 @@ func MakeSeatgeekEventsRequest(baseURL string, postCode string, seatGeekChan cha
 		seatGeekChan <- seatGeekEvents
 		close(seatGeekChan)
 	}
+}
+
+func GetTimeToday(loc *time.Location) TimeToday {
+	var timeToday TimeToday
+
+	currentTime := time.Now().In(loc)
+
+	timeBeginningOfDay := time.Date(currentTime.Year(), currentTime.Month(), currentTime.Day(), 0, 0, 0, 0, loc)
+	timeEndOfDay := timeBeginningOfDay.Add(24 * time.Hour)
+
+	timeToday.BeginningOfDay = timeBeginningOfDay
+	timeToday.EndOfDay = timeEndOfDay
+
+	return timeToday
 }
