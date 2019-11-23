@@ -1,0 +1,61 @@
+h3 {
+  margin: 40px 0 0;
+}
+
+ul {
+  list-style-type: none;
+  padding: 0;
+}
+
+li {
+  display: inline-block;
+  margin: 5px 5px;
+  padding: 5px 10px;
+  border: 1px solid black;
+  border-radius: 20px;
+}
+
+a {
+  color: #42b983;
+}
+
+.leftsidebar {
+    border: 2px solid black;
+    margin: 0;
+    padding: 0;
+}
+
+.selections {
+    margin: 5px auto;
+    padding: 0 5px;
+}
+
+.selections ul {
+    border: 1px solid black;
+}
+
+.playlistcontent {
+    border: 2px solid black;
+    border-left: 0;
+    margin: 0;
+}
+
+.playlistcontent .btn {
+    color: white;
+    background: #1DB954;
+    border: 1px solid #1DB954;
+    border-radius: 20px;
+    font-weight: 700;
+    font-size: 14px;
+    line-height: 1;
+    border-radius: 500px;
+    padding: 16px 48px 18px;
+    transition-property: background-color,border-color,color,box-shadow,filter;
+    transition-duration: .3s;
+    border-width: 0;
+    letter-spacing: 2px;
+    min-width: 200px;
+    text-transform: uppercase;
+    white-space: normal;
+    font-family: Circular,Helvetica Neue,Helvetica,Arial,sans-serif;
+}

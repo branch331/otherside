@@ -1,60 +1,61 @@
 <template>
-  <div class="home">
+  <div class="home row">
+    <div class="leftsidebar col-md-4">
+      <div class="selections">
+        <h5>Selected Cities</h5>
+        <ul v-if="selectedCities">
+          <li v-for="city in selectedCities" v-bind:key="city" v-on:click="transferArrayValue(selectedCities, availableCities, city)">
+            {{city}}
+          </li>
+        </ul>
 
-    <h2>HOME</h2>
+        <h5>Available Cities</h5>
+        <ul v-if="availableCities">
+          <li v-for="city in availableCities" v-bind:key="city" v-on:click="transferArrayValue(availableCities, selectedCities, city)">
+            {{city}}
+          </li>
+        </ul>
+      </div>
 
-    <div v-if="!isStateStringCorrect">
-      <button v-on:click="redirectToURL">Log In</button>
-    </div>
-    
-    <div v-if="isStateStringCorrect">
-      <div v-if="artistIDs">
-        <button v-on:click="buildPlaylist('Spooky Title', 'Spooooky Description!')">Build Playlist</button>
+      <div class="selections">
+        <h5>Selected Genres</h5>
+        <ul v-if="selectedGenres">
+          <li v-for="genre in selectedGenres" v-bind:key="genre" v-on:click="transferArrayValue(selectedGenres, availableGenres, genre)">
+            {{genre}}
+          </li>
+        </ul>
+
+        <h5>Available Genres</h5>
+        <ul v-if="availableGenres">
+          <li v-for="genre in availableGenres" v-bind:key="genre" v-on:click="transferArrayValue(availableGenres, selectedGenres, genre)">
+            {{genre}}
+          </li>
+        </ul>
       </div>
     </div>
 
-      <p>state string {{stateString}}</p>
+    <div class="playlistcontent col-md-8">
+      <div v-if="!isStateStringCorrect">
+        <button class="btn" v-on:click="redirectToURL">Log In</button>
+      </div>
+      
+      <div v-if="isStateStringCorrect">
+        <button class="btn" v-on:click="buildPlaylist('Spooky Title', 'Spooooky Description!')">Build Playlist</button>
+      </div>
 
-    <h5>Selected Cities</h5>
-    <ul v-if="selectedCities">
-      <li v-for="city in selectedCities" v-bind:key="city" v-on:click="transferArrayValue(selectedCities, availableCities, city)">
-        {{city}}
-      </li>
-    </ul>
+      <h2>Events Data:</h2>
 
-    <h5>Available Cities</h5>
-    <ul v-if="availableCities">
-      <li v-for="city in availableCities" v-bind:key="city" v-on:click="transferArrayValue(availableCities, selectedCities, city)">
-        {{city}}
-      </li>
-    </ul>
+      <div v-if="localEvents">
+        {{localEvents}}
+      </div>
 
-    <h5>Selected Genres</h5>
-    <ul v-if="selectedGenres">
-      <li v-for="genre in selectedGenres" v-bind:key="genre" v-on:click="transferArrayValue(selectedGenres, availableGenres, genre)">
-        {{genre}}
-      </li>
-    </ul>
+      <div v-if="topTracks">
+        {{topTracks.length}}
+      </div>
 
-    <h5>Available Genres</h5>
-    <ul v-if="availableGenres">
-      <li v-for="genre in availableGenres" v-bind:key="genre" v-on:click="transferArrayValue(availableGenres, selectedGenres, genre)">
-        {{genre}}
-      </li>
-    </ul>
-
-    <h2>Events Data:</h2>
-
-    <div v-if="localEvents">
-      {{localEvents}}
+      <h2>Playlist Status:</h2>
+      <h2 v-if="playlistStatus">{{playlistStatus}}</h2>
     </div>
-
-    <div v-if="topTracks">
-      {{topTracks.length}}
-    </div>
-
-    <h2>Playlist Status:</h2>
-    <h2 v-if="playlistStatus">{{playlistStatus}}</h2>
 
   </div>
 </template>
@@ -309,20 +310,4 @@ export default {
 }
 </script>
 
-<!-- Add "scoped" attribute to limit CSS to this component only -->
-<style scoped>
-h3 {
-  margin: 40px 0 0;
-}
-ul {
-  list-style-type: none;
-  padding: 0;
-}
-li {
-  display: inline-block;
-  margin: 0 10px;
-}
-a {
-  color: #42b983;
-}
-</style>
+
