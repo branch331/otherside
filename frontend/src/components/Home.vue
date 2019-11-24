@@ -1,60 +1,96 @@
 <template>
-  <div class="home row">
-    <div class="leftsidebar col-md-4">
-      <div class="selections">
-        <h5>Selected Cities</h5>
-        <ul v-if="selectedCities">
-          <li v-for="city in selectedCities" v-bind:key="city" v-on:click="transferArrayValue(selectedCities, availableCities, city)">
-            {{city}}
+  <div class="home">
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+      <a class="navbar-brand" href="#">Navbar</a>
+      <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNavDropdown" aria-controls="navbarNavDropdown" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNavDropdown">
+        <ul class="navbar-nav">
+          <li class="nav-item active">
+            <a class="nav-link" href="#">Home <span class="sr-only">(current)</span></a>
           </li>
-        </ul>
-
-        <h5>Available Cities</h5>
-        <ul v-if="availableCities">
-          <li v-for="city in availableCities" v-bind:key="city" v-on:click="transferArrayValue(availableCities, selectedCities, city)">
-            {{city}}
+          <li class="nav-item">
+            <a class="nav-link" href="#">Features</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="#">Pricing</a>
+          </li>
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+              Dropdown link
+            </a>
+            <div class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
+              <a class="dropdown-item" href="#">Action</a>
+              <a class="dropdown-item" href="#">Another action</a>
+              <a class="dropdown-item" href="#">Something else here</a>
+            </div>
           </li>
         </ul>
       </div>
+    </nav>
 
-      <div class="selections">
-        <h5>Selected Genres</h5>
-        <ul v-if="selectedGenres">
-          <li v-for="genre in selectedGenres" v-bind:key="genre" v-on:click="transferArrayValue(selectedGenres, availableGenres, genre)">
-            {{genre}}
-          </li>
-        </ul>
+    <div class="row">
+      <div class="leftsidebar col-md-4">
+        <div class="selections">
+          <h5>Selected Cities</h5>
+          <ul v-if="selectedCities">
+            <li v-for="city in selectedCities" v-bind:key="city" v-on:click="transferArrayValue(selectedCities, availableCities, city)">
+              {{city}}
+            </li>
+          </ul>
 
-        <h5>Available Genres</h5>
-        <ul v-if="availableGenres">
-          <li v-for="genre in availableGenres" v-bind:key="genre" v-on:click="transferArrayValue(availableGenres, selectedGenres, genre)">
-            {{genre}}
-          </li>
-        </ul>
+          <h5>Available Cities</h5>
+          <ul v-if="availableCities">
+            <li v-for="city in availableCities" v-bind:key="city" v-on:click="transferArrayValue(availableCities, selectedCities, city)">
+              {{city}}
+            </li>
+          </ul>
+        </div>
+
+        <div class="selections">
+          <h5>Selected Genres</h5>
+          <ul v-if="selectedGenres">
+            <li v-for="genre in selectedGenres" v-bind:key="genre" v-on:click="transferArrayValue(selectedGenres, availableGenres, genre)">
+              {{genre}}
+            </li>
+          </ul>
+
+          <h5>Available Genres</h5>
+          <ul v-if="availableGenres">
+            <li v-for="genre in availableGenres" v-bind:key="genre" v-on:click="transferArrayValue(availableGenres, selectedGenres, genre)">
+              {{genre}}
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="playlistcontent col-md-8">
+        <div v-if="!isStateStringCorrect">
+          <button class="btn" v-on:click="redirectToURL">Log In</button>
+        </div>
+        
+        <div v-if="isStateStringCorrect">
+          <button class="btn" v-on:click="buildPlaylist('Spooky Title', 'Spooooky Description!')">Build Playlist</button>
+        </div>
+
+        <h2>Events Data:</h2>
+
+        <div v-if="localEvents">
+          {{localEvents}}
+        </div>
+
+        <div v-if="topTracks">
+          {{topTracks.length}}
+        </div>
+
+        <h2>Playlist Status:</h2>
+        <h2 v-if="playlistStatus">{{playlistStatus}}</h2>
       </div>
     </div>
 
-    <div class="playlistcontent col-md-8">
-      <div v-if="!isStateStringCorrect">
-        <button class="btn" v-on:click="redirectToURL">Log In</button>
-      </div>
-      
-      <div v-if="isStateStringCorrect">
-        <button class="btn" v-on:click="buildPlaylist('Spooky Title', 'Spooooky Description!')">Build Playlist</button>
-      </div>
-
-      <h2>Events Data:</h2>
-
-      <div v-if="localEvents">
-        {{localEvents}}
-      </div>
-
-      <div v-if="topTracks">
-        {{topTracks.length}}
-      </div>
-
-      <h2>Playlist Status:</h2>
-      <h2 v-if="playlistStatus">{{playlistStatus}}</h2>
+    <div class="footer">
+      Footer
     </div>
 
   </div>
