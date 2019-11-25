@@ -2,22 +2,24 @@ h3 {
   margin: 40px 0 0;
 }
 
-ul {
-  list-style-type: none;
-  padding: 0;
-}
-
-li {
-  display: inline-block;
-  margin: 5px 5px;
-  padding: 5px 10px;
-  border: 1px solid black;
-  border-radius: 20px;
-}
-
 a {
   color: #42b983;
 }
+
+/* NAVBAR */
+.bg-info {
+  background-color: rgb(240, 185, 82) !important;
+}
+
+.navbar-dark .navbar-brand {
+  color: black;
+}
+
+.navbar-dark .navbar-nav .nav-link {
+  color: black;
+}
+
+/* NAVBAR */
 
 .leftsidebar {
     overflow: scroll;
@@ -25,6 +27,19 @@ a {
     border: 2px solid black;
     margin: 0;
     padding: 0;
+}
+
+.leftsidebar ul {
+  list-style-type: none;
+  padding: 0;
+}
+
+.leftsidebar li {
+  display: inline-block;
+  margin: 5px 5px;
+  padding: 5px 10px;
+  border: 1px solid black;
+  border-radius: 20px;
 }
 
 .selections {
@@ -38,8 +53,12 @@ a {
 
 .playlistcontent {
     border: 2px solid black;
+    background: url("forest.jpg");
+    background-repeat: no-repeat;
+    background-size: 1000px 800px;
     border-left: 0;
     margin: 0;
+    padding: 0;
 }
 
 .playlistcontent .btn { 
@@ -65,4 +84,11 @@ a {
 
 .navbar {
   margin: 0;
+}
+
+.footer {
+  margin-top: 20px;
+  margin-bottom: 50px;
+  font-size: 20px;
+  font-weight: bold;
 }
