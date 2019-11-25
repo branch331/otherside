@@ -51,11 +51,17 @@ a {
     border: 1px solid black;
 }
 
+.eventsHolder {
+  overflow: scroll;
+  height: 20em;
+}
+
 .playlistcontent {
+    height: 35em;
     border: 2px solid black;
     background: url("forest.jpg");
     background-repeat: no-repeat;
-    background-size: 1000px 800px;
+    background-size: 1000px 700px;
     border-left: 0;
     margin: 0;
     padding: 0;
@@ -71,7 +77,7 @@ a {
     line-height: 1;
     border-radius: 500px;
     padding: 16px 48px 18px;
-    margin-top: 17em;
+    margin-top: 0.5em;
     transition-property: background-color,border-color,color,box-shadow,filter;
     transition-duration: .3s;
     border-width: 0;

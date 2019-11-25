@@ -61,18 +61,23 @@
       </div>
 
       <div class="playlistcontent col-md-8">
+
+        <div class="eventsHolder">
+          <h2>Events Data:</h2>
+
+          <div v-if="localEvents">
+            <li v-for="event in localEvents" v-bind:key="event">
+              {{event.Performers}}
+            </li>
+          </div>
+        </div>
+
         <div v-if="!isStateStringCorrect">
           <button class="btn" v-on:click="redirectToURL">Log In</button>
         </div>
         
         <div v-if="isStateStringCorrect">
           <button class="btn" v-on:click="buildPlaylist('Spooky Title', 'Spooooky Description!')">Build Playlist</button>
-        </div>
-
-        <h2>Events Data:</h2>
-
-        <div v-if="localEvents">
-          {{localEvents}}
         </div>
 
         <div v-if="topTracks">
