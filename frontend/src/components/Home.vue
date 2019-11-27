@@ -61,7 +61,7 @@
         </div>
       </div>
 
-      <div class="playlistcontent col-md-8">
+      <div class="playlistcontent col-md-6">
 
         <div class="eventsHolder">
           <h2>Events Data:</h2>
@@ -85,8 +85,6 @@
           {{topTracks.length}}
         </div>
 
-        <h2>Playlist Status:</h2>
-        <h2 v-if="playlistStatus">{{playlistStatus}}</h2>
       </div>
     </div>
 
