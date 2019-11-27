@@ -9,7 +9,7 @@ a {
 .mainBody {
   background: url("forest2.jpg");
   background-repeat: no-repeat;
-  background-size: 1500px 900px;
+  background-size: 1500px 1200px;
   height: 45em;
 }
 
@@ -50,8 +50,25 @@ a {
   display: inline-block;
   margin: 5px 5px;
   padding: 5px 10px;
-  border: 1px solid black;
+  border: 1px solid transparent;
   border-radius: 20px;
+  background: rgba(31, 123, 106);
+  cursor: pointer;
+}
+
+.selectedX {
+  margin-left: 0.5em;
+  font-size: 13px;
+  color: rgba(233, 222, 222, 0.721);
+}
+
+.leftsidebar li:hover {
+  font-weight: bold;
+}
+
+.leftsidebar li:hover .selectedX {
+  font-weight: bold;
+  color: white;
 }
 
 .selections {
@@ -60,14 +77,14 @@ a {
 }
 
 .selections ul {
-    border: 1px solid black;
+    border: 1px solid transparent;
 }
 
 .eventsHolder {
   overflow: scroll;
   height: 20em;
   width: 40em;
-  margin: 0 auto;
+  margin: 6em auto 0 auto;
 }
 
 #performerCarousel {

@@ -32,14 +32,14 @@
           <h5>Selected Cities</h5>
           <ul v-if="selectedCities">
             <li v-for="city in selectedCities" v-bind:key="city" v-on:click="transferArrayValue(selectedCities, availableCities, city)">
-              {{city}}
+              {{city}} <span class="selectedX">X</span>
             </li>
           </ul>
 
           <h5>Available Cities</h5>
           <ul v-if="availableCities">
             <li v-for="city in availableCities" v-bind:key="city" v-on:click="transferArrayValue(availableCities, selectedCities, city)">
-              {{city}}
+              {{city}} <span class="selectedX">X</span>
             </li>
           </ul>
         </div>
@@ -48,14 +48,14 @@
           <h5>Selected Genres</h5>
           <ul v-if="selectedGenres">
             <li v-for="genre in selectedGenres" v-bind:key="genre" v-on:click="transferArrayValue(selectedGenres, availableGenres, genre)">
-              {{genre}}
+              {{genre}} <span class="selectedX">X</span>
             </li>
           </ul>
 
           <h5>Available Genres</h5>
           <ul v-if="availableGenres">
             <li v-for="genre in availableGenres" v-bind:key="genre" v-on:click="transferArrayValue(availableGenres, selectedGenres, genre)">
-              {{genre}}
+              {{genre}} <span class="selectedX">X</span>
             </li>
           </ul>
         </div>
