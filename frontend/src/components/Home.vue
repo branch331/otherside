@@ -67,17 +67,34 @@
           <h2>Events Data:</h2>
 
           <div v-if="localEvents">
-            <li v-for="event in localEvents" v-bind:key="event">
-              {{event.Performers}}
-            </li>
+            <b-carousel
+              id="performerCarousel"
+              v-model="slide"
+              :interval="1000"
+              fade="true"
+              no-hover-pause="true"
+              no-touch="true"
+              background="#ababab"
+              img-width="1024"
+              img-height="480"
+              style="text-shadow: 1px 1px 2px #333;"
+              @sliding-start="onSlideStart"
+              @sliding-end="onSlideEnd">
+
+              <template v-for="event in localEvents">
+                  <b-carousel-slide class="performerSlide" v-for="performer in event.Performers" v-bind:key="performer" img-src="https://picsum.photos/1024/1024/?image=54">
+                    <p>{{performer}}</p>
+                  </b-carousel-slide>
+              </template>
+            </b-carousel>
           </div>
         </div>
 
-        <div v-if="!isStateStringCorrect">
+        <div class="btnHolder" v-if="!isStateStringCorrect">
           <button class="btn" v-on:click="redirectToURL">Log In</button>
         </div>
         
-        <div v-if="isStateStringCorrect">
+        <div class="btnHolder" v-if="isStateStringCorrect">
           <button class="btn" v-on:click="buildPlaylist('Spooky Title', 'Spooooky Description!')">Build Playlist</button>
         </div>
 

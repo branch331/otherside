@@ -66,16 +66,33 @@ a {
 .eventsHolder {
   overflow: scroll;
   height: 20em;
+  width: 40em;
   margin: 0 auto;
+}
+
+#performerCarousel {
+  height: 15em;
+  width: 15em;
+  margin: 2em auto 0 auto;
+  border: 1px solid transparent;
+  background: pink;
+}
+
+#performerCarousel p {
+  margin-top: 20em;
+}
+
+#performerCarousel .carousel-caption {
+  padding: 0;
+  bottom: 0;
+}
+
+.performerSlide {
+  border-radius: 20px;
 }
 
 .playlistcontent {
     height: 35em;
-    /*
-    background: url("forest.jpg");
-    background-repeat: no-repeat;
-    background-size: 1000px 700px;
-    */
     margin: 0;
     padding: 0;
 }
