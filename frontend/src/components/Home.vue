@@ -70,6 +70,7 @@
             <b-carousel
               id="performerCarouselLeft"
               class="performerCarousel"
+              ref="carouselLeft"
               v-model="slide"
               :interval="1000"
               fade=true
@@ -90,6 +91,7 @@
             <b-carousel
               id="performerCarouselRight"
               class="performerCarousel"
+              ref="carouselRight"
               v-model="slide"
               :interval="1000"
               fade=true
@@ -110,6 +112,7 @@
                         <b-carousel
               id="performerCarouselMain"
               class="performerCarousel"
+              ref="carouselMain"
               v-model="slide"
               :interval="1000"
               fade=true
@@ -345,6 +348,7 @@ export default {
           if (this.$route.query.state == this.stateString) { //User has logged in successfully
             this.getArtistIDs(this.localEvents);
           }
+          this.setCarouselStartSlides();
         }));
     },
     setNewSpotifyAuthenticationUrl: function() {
@@ -397,6 +401,21 @@ export default {
               this.playlistStatus = response.status;
           }));
         }));
+    },
+    setCarouselStartSlides: function() {
+      alert("schmee");
+      this.$refs.carouselLeft.pause();
+      this.$refs.carouselRight.pause();
+      this.$refs.carouselMain.pause();
+      alert("paused");
+      this.$refs.carouselLeft.setSlide(0);
+      this.$refs.carouselMain.setSlide(1);
+      this.$refs.carouselRight.setSlide(2);
+      alert("wee");
+      this.$refs.carouselLeft.start();
+      this.$refs.carouselRight.start();
+      this.$refs.carouselMain.start();
+      alert("started");
     }
   }
 }
