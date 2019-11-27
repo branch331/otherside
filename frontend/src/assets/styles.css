@@ -87,7 +87,7 @@ a {
   margin: 6em auto 0 auto;
 }
 
-#performerCarousel {
+.performerCarousel {
   height: 15em;
   width: 15em;
   margin: 2em auto 0 auto;
@@ -95,17 +95,34 @@ a {
   background: pink;
 }
 
-#performerCarousel p {
+.performerCarousel p {
   margin-top: 20em;
 }
 
-#performerCarousel .carousel-caption {
+.performerCarousel .carousel-caption {
   padding: 0;
   bottom: 0;
 }
 
 .performerSlide {
   border-radius: 20px;
+}
+
+#performerCarouselLeft {
+  position: absolute;
+  margin-top: 1em;
+}
+
+#performerCarouselMain {
+  position: absolute;
+  margin-top: 3em;
+  margin-left: 12em;
+}
+
+#performerCarouselRight {
+  position: absolute;
+  margin-left: 24em;
+  margin-top: 1em;
 }
 
 .playlistcontent {
