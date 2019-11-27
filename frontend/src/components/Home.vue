@@ -1,5 +1,6 @@
 <template>
   <div class="home">
+    <div class="mainBody">
     <b-navbar toggleable="lg" type="dark" variant="info">
       <b-navbar-brand href="#">Otherside</b-navbar-brand>
 
@@ -89,11 +90,12 @@
       </div>
     </div>
 
+    </div>
     <div class="footer">
       Powered by <a href="https://seatgeek.com/"><img src="../assets/seatgeek-logo.png"></a>
     </div>
-
   </div>
+
 </template>
 
 <script>

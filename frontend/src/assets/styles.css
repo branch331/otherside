@@ -6,9 +6,17 @@ a {
   color: #42b983;
 }
 
+.mainBody {
+  background: url("forest2.jpg");
+  background-repeat: no-repeat;
+  background-size: 1500px 900px;
+  height: 40em;
+}
+
 /* NAVBAR */
 .bg-info {
-  background-color: rgb(240, 185, 82) !important;
+  /* #DDD2D1 */
+  background-color: #DDD2D1 !important;
 }
 
 .navbar-dark .navbar-brand {
@@ -22,11 +30,13 @@ a {
 /* NAVBAR */
 
 .leftsidebar {
-    overflow: scroll;
-    height: 35em;
-    border: 2px solid black;
-    margin: 0;
-    padding: 0;
+  overflow: scroll;
+  background: rgba(31, 123, 106, 0.6);
+  color: white;
+  height: 35em;
+  border-bottom: 2px solid black;
+  margin: 0;
+  padding: 0;
 }
 
 .leftsidebar ul {
@@ -54,15 +64,16 @@ a {
 .eventsHolder {
   overflow: scroll;
   height: 20em;
+  margin: 0 auto;
 }
 
 .playlistcontent {
     height: 35em;
-    border: 2px solid black;
+    /*
     background: url("forest.jpg");
     background-repeat: no-repeat;
     background-size: 1000px 700px;
-    border-left: 0;
+    */
     margin: 0;
     padding: 0;
 }
