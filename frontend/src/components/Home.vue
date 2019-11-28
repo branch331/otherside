@@ -66,26 +66,31 @@
         <div class="eventsHolder">
           <h2>Events Data:</h2>
 
-          <div v-if="localEvents">
+          <div> <!-- v-if="localEvents" -->
             <b-carousel
               id="performerCarouselLeft"
               class="performerCarousel"
               ref="carouselLeft"
               v-model="slide"
               :interval="1000"
-              fade=true
-              no-hover-pause=true 
-              no-touch=true 
+              fade="true"
+              no-hover-pause="true" 
+              no-touch="true" 
               background="#ababab"
               img-width="1024"
               img-height="480"
               style="text-shadow: 1px 1px 2px #333;">
 
+            <!--
               <template v-for="event in localEvents">
                   <b-carousel-slide class="performerSlide" v-for="(performer, i) in event.Performers" v-bind:key="`${i}-${performer}`" img-src="https://picsum.photos/1024/1024/?image=54">
                     <p>{{performer}}</p>
                   </b-carousel-slide>
               </template>
+              -->
+              <b-carousel-slide class="performerSlide" v-for="(performer, i) in localPerformers" v-bind:key="`${i}-${performer}-left`" img-src="https://picsum.photos/1024/1024/?image=54">
+                <p>{{performer}}</p>
+              </b-carousel-slide>
             </b-carousel>
 
             <b-carousel
@@ -102,11 +107,9 @@
               img-height="480"
               style="text-shadow: 1px 1px 2px #333;">
 
-              <template v-for="event in localEvents">
-                  <b-carousel-slide class="performerSlide" v-for="(performer, i) in event.Performers" v-bind:key="`${i}-${performer}`" img-src="https://picsum.photos/1024/1024/?image=54">
-                    <p>{{performer}}</p>
-                  </b-carousel-slide>
-              </template>
+              <b-carousel-slide class="performerSlide" v-for="(performer, i) in localPerformers" v-bind:key="`${i}-${performer}-left`" img-src="https://picsum.photos/1024/1024/?image=54">
+                <p>{{performer}}</p>
+              </b-carousel-slide>
             </b-carousel>
 
                         <b-carousel
@@ -123,11 +126,9 @@
               img-height="480"
               style="text-shadow: 1px 1px 2px #333;">
 
-              <template v-for="event in localEvents">
-                  <b-carousel-slide class="performerSlide" v-for="(performer, i) in event.Performers" v-bind:key="`${i}-${performer}`" img-src="https://picsum.photos/1024/1024/?image=54">
-                    <p>{{performer}}</p>
-                  </b-carousel-slide>
-              </template>
+              <b-carousel-slide class="performerSlide" v-for="(performer, i) in localPerformers" v-bind:key="`${i}-${performer}-left`" img-src="https://picsum.photos/1024/1024/?image=54">
+                <p>{{performer}}</p>
+              </b-carousel-slide>
             </b-carousel>
           </div>
         </div>
@@ -168,7 +169,7 @@ const state = {
   selectedGenres: null,
   availableCities: null,
   availableGenres: null,
-  stateString: null,
+  stateString: null
 };
 
 const mutations = {
@@ -201,6 +202,7 @@ export default {
   data () {
     return {
       localEvents: null,
+      localPerformers: null,
       playlistStatus: null,
       spotifyAuthenticationUrl: null,
       topTracks: null,
@@ -348,6 +350,7 @@ export default {
           if (this.$route.query.state == this.stateString) { //User has logged in successfully
             this.getArtistIDs(this.localEvents);
           }
+          this.setPerformersArray(response.data);
           this.setCarouselStartSlides();
         }));
     },
@@ -402,20 +405,46 @@ export default {
           }));
         }));
     },
+    setPerformersArray: function(localEvents) {
+      var tempPerformers = new Array();
+
+      if (localEvents != null) {
+        localEvents.forEach(function(event) {
+          if (event.Performers != null) {
+              event.Performers.forEach(function(performer) {
+                tempPerformers.push(performer);
+              });
+          }
+        }); 
+
+        this.localPerformers = tempPerformers;
+      }
+    },
     setCarouselStartSlides: function() {
-      alert("schmee");
-      this.$refs.carouselLeft.pause();
-      this.$refs.carouselRight.pause();
-      this.$refs.carouselMain.pause();
-      alert("paused");
-      this.$refs.carouselLeft.setSlide(0);
-      this.$refs.carouselMain.setSlide(1);
-      this.$refs.carouselRight.setSlide(2);
-      alert("wee");
-      this.$refs.carouselLeft.start();
-      this.$refs.carouselRight.start();
-      this.$refs.carouselMain.start();
-      alert("started");
+      var numberOfPerformers = this.localPerformers.length;
+
+      if (numberOfPerformers > 0) {
+        this.$refs.carouselLeft.pause();
+        this.$refs.carouselRight.pause();
+        this.$refs.carouselMain.pause();
+        if (numberOfPerformers >= 3) {
+          this.$refs.carouselLeft.setSlide(0);
+          this.$refs.carouselMain.setSlide(1);
+          this.$refs.carouselRight.setSlide(2);
+        } else if (numberOfPerformers == 2) {
+          this.$refs.carouselLeft.setSlide(0);
+          this.$refs.carouselMain.setSlide(1);
+          this.$refs.carouselRight.setSlide(0);
+        } else {
+          this.$refs.carouselLeft.setSlide(0);
+          this.$refs.carouselMain.setSlide(0);
+          this.$refs.carouselRight.setSlide(0);
+        }
+
+        this.$refs.carouselLeft.start();
+        this.$refs.carouselRight.start();
+        this.$refs.carouselMain.start();
+      }
     }
   }
 }
