@@ -92,7 +92,7 @@ a {
   width: 15em;
   margin: 2em auto 0 auto;
   border: 1px solid transparent;
-  background: pink;
+  background-color: transparent;
 }
 
 .performerCarousel p {
@@ -123,6 +123,14 @@ a {
   position: absolute;
   margin-left: 24em;
   margin-top: 1em;
+}
+
+#performerCarouselLeft {
+  opacity: 0.6;
+}
+
+#performerCarouselRight {
+  opacity: 0.6;
 }
 
 .playlistcontent {

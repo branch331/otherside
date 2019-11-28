@@ -73,10 +73,9 @@
               ref="carouselLeft"
               v-model="slide"
               :interval="1000"
-              fade="true"
-              no-hover-pause="true" 
-              no-touch="true" 
-              background="#ababab"
+              fade=true
+              no-hover-pause=true 
+              no-touch=true 
               img-width="1024"
               img-height="480"
               style="text-shadow: 1px 1px 2px #333;">
@@ -102,7 +101,6 @@
               fade=true
               no-hover-pause=true 
               no-touch=true 
-              background="#ababab"
               img-width="1024"
               img-height="480"
               style="text-shadow: 1px 1px 2px #333;">
@@ -121,7 +119,6 @@
               fade=true
               no-hover-pause=true 
               no-touch=true 
-              background="#ababab"
               img-width="1024"
               img-height="480"
               style="text-shadow: 1px 1px 2px #333;">
@@ -351,7 +348,12 @@ export default {
             this.getArtistIDs(this.localEvents);
           }
           this.setPerformersArray(response.data);
-          this.setCarouselStartSlides();
+
+          this.$nextTick(() => {
+            this.$nextTick(() => {
+              this.setCarouselStartSlides();
+            });
+          });
         }));
     },
     setNewSpotifyAuthenticationUrl: function() {
