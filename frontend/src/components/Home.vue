@@ -29,7 +29,7 @@
     <div class="row">
       <div class="leftsidebar col-md-4">
         <div class="selections">
-          <h5>Selected Cities</h5>
+          <h5>1. Pick some cities</h5>
           <ul v-if="selectedCities">
             <li v-for="city in selectedCities" v-bind:key="city" v-on:click="transferArrayValue(selectedCities, availableCities, city)">
               {{city}} <span class="selectedX">X</span>
@@ -45,7 +45,7 @@
         </div>
 
         <div class="selections">
-          <h5>Selected Genres</h5>
+          <h5>2. Pick some genres</h5>
           <ul v-if="selectedGenres">
             <li v-for="genre in selectedGenres" v-bind:key="genre" v-on:click="transferArrayValue(selectedGenres, availableGenres, genre)">
               {{genre}} <span class="selectedX">X</span>
