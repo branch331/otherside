@@ -50,7 +50,7 @@
               </template>
               -->
 
-          <div> 
+          <div v-if="localPerformers"> 
             <PerformerCarousel 
               carouselId="performerCarouselLeft"
               ref="carouselLeft"
@@ -198,10 +198,11 @@ export default {
     }
   },
   mounted () {
-    if (this.selectedCities != null && this.selectedGenres != null) {
-      this.getLocalEvents(this.selectedCities, this.selectedGenres);
-    }
     this.initializeStore();
+    
+    if (this.selectedCities.length != 0 && this.selectedGenres.length != 0) {
+      this.getLocalEvents(this.selectedCities, this.selectedGenres);
+    } 
     if (this.$route.query.state == null) {
       this.setNewSpotifyAuthenticationUrl();
     } 
@@ -258,6 +259,7 @@ export default {
         this.getLocalEvents(this.selectedCities, this.selectedGenres);
       } else {
         this.localEvents = null;
+        this.localPerformers = null;
       }
     },
     getAvailableCities: function() {
@@ -296,7 +298,6 @@ export default {
             this.getArtistIDs(this.localEvents);
           }
           this.setPerformersArray(response.data);
-
           this.$nextTick(() => {
             this.$nextTick(() => {
               this.setCarouselStartSlides();
@@ -371,7 +372,11 @@ export default {
       }
     },
     setCarouselStartSlides: function() {
-      var numberOfPerformers = this.localPerformers.length;
+      var numberOfPerformers = -1; 
+      
+      if (this.localPerformers != null) {
+        numberOfPerformers = this.localPerformers.length;
+      }
 
       if (numberOfPerformers > 0) {
         this.$refs.carouselLeft.pauseWrapper();

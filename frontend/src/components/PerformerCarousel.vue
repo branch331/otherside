@@ -1,9 +1,4 @@
 <template>
-<!--
-<p>
-    {{performers}}
-    </p>
-    -->
     <b-carousel
         :id="carouselId"
         class="performerCarousel"
@@ -18,7 +13,6 @@
         <b-carousel-slide class="performerSlide" v-for="(performer, i) in performers" v-bind:key="`${i}-${performer}-${carouselId}`" img-src="https://picsum.photos/1024/1024/?image=54">
             <p>{{performer}}</p>
         </b-carousel-slide>
-
     </b-carousel>
 </template>
 
