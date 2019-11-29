@@ -1,18 +1,25 @@
 <template>
   <div id="app">
+    <AppHeader />
+    <Home />
+    <AppFooter />
+    <!--
     <router-view></router-view>
+    -->
   </div>
 </template>
 
 <script>
-//import Home from './components/Home.vue'
-//import Callback from './components/Callback.vue'
+import Home from './components/Home.vue'
+import AppHeader from './components/AppHeader.vue'
+import AppFooter from './components/AppFooter.vue'
 
 export default {
   name: 'app',
   components: {
-    //Home,
-    //Callback
+    Home,
+    AppHeader,
+    AppFooter
   }
 }
 </script>
