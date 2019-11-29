@@ -42,20 +42,6 @@
         <div class="eventsHolder">
           <h2>Events Data:</h2>
 
-          <div> <!-- v-if="localEvents" -->
-            <b-carousel
-              id="performerCarouselLeft"
-              class="performerCarousel"
-              ref="carouselLeft"
-              v-model="slide"
-              :interval="1000"
-              fade=true
-              no-hover-pause=true 
-              no-touch=true 
-              img-width="1024"
-              img-height="480"
-              style="text-shadow: 1px 1px 2px #333;">
-
             <!--
               <template v-for="event in localEvents">
                   <b-carousel-slide class="performerSlide" v-for="(performer, i) in event.Performers" v-bind:key="`${i}-${performer}`" img-src="https://picsum.photos/1024/1024/?image=54">
@@ -63,46 +49,31 @@
                   </b-carousel-slide>
               </template>
               -->
-              <b-carousel-slide class="performerSlide" v-for="(performer, i) in localPerformers" v-bind:key="`${i}-${performer}-left`" img-src="https://picsum.photos/1024/1024/?image=54">
-                <p>{{performer}}</p>
-              </b-carousel-slide>
-            </b-carousel>
 
-            <b-carousel
-              id="performerCarouselRight"
-              class="performerCarousel"
+          <div> 
+            <PerformerCarousel 
+              carouselId="performerCarouselLeft"
+              ref="carouselLeft"
+              v-bind:performers="localPerformers">
+            </PerformerCarousel>
+
+            <PerformerCarousel 
+              carouselId="performerCarouselRight"
               ref="carouselRight"
-              v-model="slide"
-              :interval="1000"
-              fade=true
-              no-hover-pause=true 
-              no-touch=true 
-              img-width="1024"
-              img-height="480"
-              style="text-shadow: 1px 1px 2px #333;">
+              v-bind:performers="localPerformers">
+                <b-carousel-slide class="performerSlide" v-for="(performer, i) in localPerformers" v-bind:key="`${i}-${performer}-left`" img-src="https://picsum.photos/1024/1024/?image=54">
+                  <p>{{performer}}</p>
+                </b-carousel-slide>
+            </PerformerCarousel>
 
-              <b-carousel-slide class="performerSlide" v-for="(performer, i) in localPerformers" v-bind:key="`${i}-${performer}-left`" img-src="https://picsum.photos/1024/1024/?image=54">
-                <p>{{performer}}</p>
-              </b-carousel-slide>
-            </b-carousel>
-
-                        <b-carousel
-              id="performerCarouselMain"
-              class="performerCarousel"
+            <PerformerCarousel 
+              carouselId="performerCarouselMain"
               ref="carouselMain"
-              v-model="slide"
-              :interval="1000"
-              fade=true
-              no-hover-pause=true 
-              no-touch=true 
-              img-width="1024"
-              img-height="480"
-              style="text-shadow: 1px 1px 2px #333;">
-
-              <b-carousel-slide class="performerSlide" v-for="(performer, i) in localPerformers" v-bind:key="`${i}-${performer}-left`" img-src="https://picsum.photos/1024/1024/?image=54">
-                <p>{{performer}}</p>
-              </b-carousel-slide>
-            </b-carousel>
+              v-bind:performers="localPerformers">
+                <b-carousel-slide class="performerSlide" v-for="(performer, i) in localPerformers" v-bind:key="`${i}-${performer}-left`" img-src="https://picsum.photos/1024/1024/?image=54">
+                  <p>{{performer}}</p>
+                </b-carousel-slide>
+            </PerformerCarousel>
           </div>
         </div>
 
@@ -130,6 +101,7 @@
 import axios from 'axios';
 import Vue from "vue";
 import Vuex from "vuex";
+import PerformerCarousel from './PerformerCarousel.vue';
 import createPersistedState from "vuex-persistedstate";
 
 Vue.use(Vuex);
@@ -169,6 +141,9 @@ const store = new Vuex.Store({
 export default {
   name: 'home',
   store,
+  components: {
+    PerformerCarousel
+  },
   data () {
     return {
       localEvents: null,
@@ -399,26 +374,27 @@ export default {
       var numberOfPerformers = this.localPerformers.length;
 
       if (numberOfPerformers > 0) {
-        this.$refs.carouselLeft.pause();
-        this.$refs.carouselRight.pause();
-        this.$refs.carouselMain.pause();
+        this.$refs.carouselLeft.pauseWrapper();
+        this.$refs.carouselRight.pauseWrapper();
+        this.$refs.carouselMain.pauseWrapper();
+
         if (numberOfPerformers >= 3) {
-          this.$refs.carouselLeft.setSlide(0);
-          this.$refs.carouselMain.setSlide(1);
-          this.$refs.carouselRight.setSlide(2);
+          this.$refs.carouselLeft.setSlideWrapper(0);
+          this.$refs.carouselMain.setSlideWrapper(1);
+          this.$refs.carouselRight.setSlideWrapper(2);
         } else if (numberOfPerformers == 2) {
-          this.$refs.carouselLeft.setSlide(0);
-          this.$refs.carouselMain.setSlide(1);
-          this.$refs.carouselRight.setSlide(0);
+          this.$refs.carouselLeft.setSlideWrapper(0);
+          this.$refs.carouselMain.setSlideWrapper(1);
+          this.$refs.carouselRight.setSlideWrapper(0);
         } else {
-          this.$refs.carouselLeft.setSlide(0);
-          this.$refs.carouselMain.setSlide(0);
-          this.$refs.carouselRight.setSlide(0);
+          this.$refs.carouselLeft.setSlideWrapper(0);
+          this.$refs.carouselMain.setSlideWrapper(0);
+          this.$refs.carouselRight.setSlideWrapper(0);
         }
 
-        this.$refs.carouselLeft.start();
-        this.$refs.carouselRight.start();
-        this.$refs.carouselMain.start();
+        this.$refs.carouselLeft.startWrapper();
+        this.$refs.carouselRight.startWrapper();
+        this.$refs.carouselMain.startWrapper();
       }
     }
   }
