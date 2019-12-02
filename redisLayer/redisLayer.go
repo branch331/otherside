@@ -45,6 +45,38 @@ func GetSeatgeekEvents(postCode string) ([]byte, error) {
 	return []byte(seatGeekEvents), nil
 }
 
+func SetKeyBytes(key string, value []byte) error {
+	if pool == nil {
+		Initialize()
+	}
+
+	conn := pool.Get()
+	defer conn.Close()
+
+	_, err := conn.Do("SET", key, value)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func GetKeyBytes(key string) ([]byte, error) {
+	if pool == nil {
+		Initialize()
+	}
+
+	conn := pool.Get()
+	defer conn.Close()
+
+	value, err := redis.String(conn.Do("GET", key))
+	if err != nil {
+		fmt.Printf(err.Error())
+	}
+
+	return []byte(value), nil
+}
+
 func SetArtistTopTrack(artistID string, topTrack []byte) error {
 	if pool == nil {
 		Initialize()

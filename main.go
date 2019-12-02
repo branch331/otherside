@@ -24,8 +24,9 @@ type TopTrackResponse struct {
 }
 
 type ArtistIDResponse struct {
-	ID  spotify.ID
-	err error
+	ID       spotify.ID
+	ImageURL string
+	err      error
 }
 
 var applicationPort = "8081"
@@ -192,7 +193,7 @@ func ArtistIDs(w http.ResponseWriter, r *http.Request) {
 	time.Sleep(200 * time.Millisecond)
 
 	var localSeatGeekEvents []seatgeekLayer.SeatGeekEvent
-	var artistIDs []spotify.ID
+	var artists []spotifyLayer.SpotifyArtistImage
 
 	err := json.NewDecoder(r.Body).Decode(&localSeatGeekEvents)
 	if err != nil {
@@ -232,11 +233,14 @@ func ArtistIDs(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusInternalServerError)
 			w.Write([]byte("Error getting artist ID for spotify artist: " + err.Error() + "\n"))
 		} else {
-			artistIDs = append(artistIDs, response.ID)
+			var newArtist spotifyLayer.SpotifyArtistImage
+			newArtist.Id = response.ID
+			newArtist.ImageURL = response.ImageURL
+			artists = append(artists, newArtist)
 		}
 	}
 	fmt.Println("[Time benchmark] Artist IDs " + time.Since(t4).String())
-	artistIDJSON, err := json.Marshal(artistIDs)
+	artistsJSON, err := json.Marshal(artists)
 	if err != nil {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusInternalServerError)
@@ -244,7 +248,7 @@ func ArtistIDs(w http.ResponseWriter, r *http.Request) {
 	} else {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
-		w.Write(artistIDJSON)
+		w.Write(artistsJSON)
 	}
 }
 
@@ -313,13 +317,14 @@ func TopTracks(w http.ResponseWriter, r *http.Request) {
 func GetArtistID(performer string, artistChan chan<- ArtistIDResponse) {
 	var response ArtistIDResponse
 
-	artistID, err := spotifyLayer.SearchAndFindSpotifyArtistID(performer)
+	artist, err := spotifyLayer.SearchAndFindSpotifyArtistID(performer)
 	if err != nil {
 		response.err = err
 		artistChan <- response
 		close(artistChan)
 	} else {
-		response.ID = artistID
+		response.ID = artist.Id
+		response.ImageURL = artist.ImageURL
 		response.err = err
 		artistChan <- response
 		close(artistChan)
