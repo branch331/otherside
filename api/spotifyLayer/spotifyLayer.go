@@ -21,6 +21,11 @@ var redirectURL = baseURL + "callback"
 var SPOTIFY_ID = os.Getenv("SPOTIFY_ID")
 var SPOTIFY_SECRET = os.Getenv("SPOTIFY_SECRET")
 
+type SpotifyArtistImage struct {
+	Id       spotify.ID
+	ImageURL string
+}
+
 func ObtainAuthenticationURL(state string) string {
 	spotifyAuth.SetAuthInfo(SPOTIFY_ID, SPOTIFY_SECRET)
 
@@ -118,35 +123,50 @@ func AddTracksToPlaylist(playlistID spotify.ID, tracksToAdd []spotify.FullTrack)
 	return nil
 }
 
-func SearchAndFindSpotifyArtistID(artistName string) (spotify.ID, error) {
+func SearchAndFindSpotifyArtistID(artistName string) (SpotifyArtistImage, error) {
+	var spotifyArtistImage SpotifyArtistImage
+
 	artistNameAlreadyCached, err := redisLayer.Exists(artistName)
 	if err != nil {
 		fmt.Print("Couldn't access artist name %s from Redis cache: "+err.Error(), artistName)
-		return "", err
+		return spotifyArtistImage, err
 	}
 
 	if artistNameAlreadyCached {
-		artistID, err := redisLayer.GetKeyString(artistName)
+		redisData, err := redisLayer.GetKeyBytes(artistName)
 
 		if err != nil {
-			fmt.Printf("Error getting value for artistID %s from Redis: "+err.Error(), artistID)
-			return "", err
+			fmt.Printf("Error getting value for artist %s from Redis: "+err.Error(), artistName)
+			return spotifyArtistImage, err
 		}
 
-		return spotify.ID(artistID), nil
+		json.Unmarshal(redisData, &spotifyArtistImage)
+		if err != nil {
+			fmt.Printf("Error unmarshalling value for artist %s from Redis: "+err.Error(), artistName)
+		}
+
+		return spotifyArtistImage, nil
 	}
 
 	searchResults, err := spotifyClient.Search(artistName, spotify.SearchTypeArtist)
 	if err != nil {
 		fmt.Printf("Error searching Spotify for artist %s"+err.Error(), artistName)
-		return "", err
+		return spotifyArtistImage, err
 	} else {
 		if len(searchResults.Artists.Artists) != 0 {
 			artistID := searchResults.Artists.Artists[0].ID
-			redisLayer.SetKeyString(artistName, string(artistID))
-			return artistID, nil
+			spotifyArtistImage.Id = artistID
+			spotifyArtistImage.ImageURL = searchResults.Artists.Artists[0].Images[0].URL
+
+			spotifyArtistSerialized, err := json.Marshal(spotifyArtistImage)
+			if err != nil {
+				fmt.Printf("Error marshalling spotify artist: " + err.Error())
+			}
+
+			redisLayer.SetKeyBytes(artistName, spotifyArtistSerialized)
+			return spotifyArtistImage, nil
 		}
 	}
 
-	return "", nil
+	return spotifyArtistImage, nil
 }

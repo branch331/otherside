@@ -89,6 +89,10 @@
           {{topTracks.length}}
         </div>
 
+        <div v-if="artists">
+          {{artists}}
+        </div>
+
       </div>
     </div>
 
@@ -151,7 +155,7 @@ export default {
       playlistStatus: null,
       spotifyAuthenticationUrl: null,
       topTracks: null,
-      artistIDs: null,
+      artists: null,
       isStateStringCorrect: null
     }
   },
@@ -337,7 +341,7 @@ export default {
 
       axios.post(artistIDsURL, JSON.stringify(events))
         .then((response => {
-          this.artistIDs = response.data;
+          this.artists = response.data;
         }));
     },
     buildPlaylist: function (name, desc) {
@@ -347,7 +351,13 @@ export default {
         "&desc=" +
         desc;
 
-      axios.post(topTracksURL, JSON.stringify(this.artistIDs))
+      var artistIDs = new Array();
+
+      this.artists.forEach(function(value) {
+        artistIDs.push(value.Id);
+      });
+
+      axios.post(topTracksURL, JSON.stringify(artistIDs))
         .then((response => {
           this.topTracks = response.data;
           axios.post(buildPlaylistURL, JSON.stringify(response.data))
