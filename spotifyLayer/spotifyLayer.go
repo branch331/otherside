@@ -23,6 +23,7 @@ var SPOTIFY_SECRET = os.Getenv("SPOTIFY_SECRET")
 
 type SpotifyArtistImage struct {
 	Id       spotify.ID
+	Name     string
 	ImageURL string
 }
 
@@ -156,6 +157,7 @@ func SearchAndFindSpotifyArtistID(artistName string) (SpotifyArtistImage, error)
 		if len(searchResults.Artists.Artists) != 0 {
 			artistID := searchResults.Artists.Artists[0].ID
 			spotifyArtistImage.Id = artistID
+			spotifyArtistImage.Name = artistName
 			spotifyArtistImage.ImageURL = searchResults.Artists.Artists[0].Images[0].URL
 
 			spotifyArtistSerialized, err := json.Marshal(spotifyArtistImage)

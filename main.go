@@ -25,6 +25,7 @@ type TopTrackResponse struct {
 
 type ArtistIDResponse struct {
 	ID       spotify.ID
+	Name     string
 	ImageURL string
 	err      error
 }
@@ -235,6 +236,7 @@ func ArtistIDs(w http.ResponseWriter, r *http.Request) {
 		} else {
 			var newArtist spotifyLayer.SpotifyArtistImage
 			newArtist.Id = response.ID
+			newArtist.Name = response.Name
 			newArtist.ImageURL = response.ImageURL
 			artists = append(artists, newArtist)
 		}
@@ -324,6 +326,7 @@ func GetArtistID(performer string, artistChan chan<- ArtistIDResponse) {
 		close(artistChan)
 	} else {
 		response.ID = artist.Id
+		response.Name = artist.Name
 		response.ImageURL = artist.ImageURL
 		response.err = err
 		artistChan <- response
