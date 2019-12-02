@@ -42,37 +42,23 @@
         <div class="eventsHolder">
           <h2>Events Data:</h2>
 
-            <!--
-              <template v-for="event in localEvents">
-                  <b-carousel-slide class="performerSlide" v-for="(performer, i) in event.Performers" v-bind:key="`${i}-${performer}`" img-src="https://picsum.photos/1024/1024/?image=54">
-                    <p>{{performer}}</p>
-                  </b-carousel-slide>
-              </template>
-              -->
-
-          <div v-if="localPerformers"> 
+          <div v-if="artistImages"> 
             <PerformerCarousel 
               carouselId="performerCarouselLeft"
               ref="carouselLeft"
-              v-bind:performers="localPerformers">
+              v-bind:artistImages="artistImages">
             </PerformerCarousel>
 
             <PerformerCarousel 
               carouselId="performerCarouselRight"
               ref="carouselRight"
-              v-bind:performers="localPerformers">
-                <b-carousel-slide class="performerSlide" v-for="(performer, i) in localPerformers" v-bind:key="`${i}-${performer}-left`" img-src="https://picsum.photos/1024/1024/?image=54">
-                  <p>{{performer}}</p>
-                </b-carousel-slide>
+              v-bind:artistImages="artistImages">
             </PerformerCarousel>
 
             <PerformerCarousel 
               carouselId="performerCarouselMain"
               ref="carouselMain"
-              v-bind:performers="localPerformers">
-                <b-carousel-slide class="performerSlide" v-for="(performer, i) in localPerformers" v-bind:key="`${i}-${performer}-left`" img-src="https://picsum.photos/1024/1024/?image=54">
-                  <p>{{performer}}</p>
-                </b-carousel-slide>
+              v-bind:artistImages="artistImages">
             </PerformerCarousel>
           </div>
         </div>
@@ -89,9 +75,9 @@
           {{topTracks.length}}
         </div>
 
-        <div v-if="artists">
-          {{artists}}
-        </div>
+        <div v-if="artistImages">
+          {{artistImages}}
+          </div>
 
       </div>
     </div>
@@ -156,6 +142,7 @@ export default {
       spotifyAuthenticationUrl: null,
       topTracks: null,
       artists: null,
+      artistImages: null,
       isStateStringCorrect: null
     }
   },
@@ -264,6 +251,7 @@ export default {
       } else {
         this.localEvents = null;
         this.localPerformers = null;
+        this.artistImages = null;
       }
     },
     getAvailableCities: function() {
@@ -302,11 +290,6 @@ export default {
             this.getArtistIDs(this.localEvents);
           }
           this.setPerformersArray(response.data);
-          this.$nextTick(() => {
-            this.$nextTick(() => {
-              this.setCarouselStartSlides();
-            });
-          });
         }));
     },
     setNewSpotifyAuthenticationUrl: function() {
@@ -342,6 +325,13 @@ export default {
       axios.post(artistIDsURL, JSON.stringify(events))
         .then((response => {
           this.artists = response.data;
+          this.setArtistImagesArray(this.artists);
+
+          this.$nextTick(() => {
+            this.$nextTick(() => {
+              this.setCarouselStartSlides();
+            });
+          });
         }));
     },
     buildPlaylist: function (name, desc) {
@@ -381,11 +371,24 @@ export default {
         this.localPerformers = tempPerformers;
       }
     },
+    setArtistImagesArray: function(artists) {
+      var tempArtistImages = new Array();
+
+      if (artists != null) {
+        artists.forEach(function(artist) {
+          if (artist.Name != null) {
+            tempArtistImages.push({"Name": artist.Name, "ImageURL": artist.ImageURL});
+          }
+        }); 
+
+        this.artistImages = tempArtistImages;
+      }
+    },
     setCarouselStartSlides: function() {
       var numberOfPerformers = -1; 
       
-      if (this.localPerformers != null) {
-        numberOfPerformers = this.localPerformers.length;
+      if (this.artistImages != null) {
+        numberOfPerformers = this.artistImages.length;
       }
 
       if (numberOfPerformers > 0) {

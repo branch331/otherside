@@ -108,6 +108,12 @@ a {
   border-radius: 20px;
 }
 
+.performerSlide img {
+  display: block;
+  width: auto;
+  height: auto;
+}
+
 #performerCarouselLeft {
   position: absolute;
   margin-top: 1em;

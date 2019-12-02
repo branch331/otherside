@@ -10,8 +10,8 @@
         img-width="1024"
         img-height="480"
         style="text-shadow: 1px 1px 2px #333;">
-        <b-carousel-slide class="performerSlide" v-for="(performer, i) in performers" v-bind:key="`${i}-${performer}-${carouselId}`" img-src="https://picsum.photos/1024/1024/?image=54">
-            <p>{{performer}}</p>
+        <b-carousel-slide class="performerSlide" v-for="(artist, i) in artistImages" v-bind:key="`${i}-${artist}-${carouselId}`" :img-src=artist.ImageURL>
+            <p>{{artist.Name}}</p>
         </b-carousel-slide>
     </b-carousel>
 </template>
@@ -21,7 +21,7 @@ export default {
     name: 'PerformerCarousel',
     props: {
         carouselId: String,
-        performers: Array
+        artistImages: Array
     },
     methods: {
         pauseWrapper: function() {
