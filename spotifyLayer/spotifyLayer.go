@@ -172,3 +172,14 @@ func SearchAndFindSpotifyArtistID(artistName string) (SpotifyArtistImage, error)
 
 	return spotifyArtistImage, nil
 }
+
+func GetCurrentUser() (string, error) {
+
+	currentUser, err := spotifyClient.CurrentUser()
+	if err != nil {
+		fmt.Printf("Error getting current Spotify user: " + err.Error())
+		return "", err
+	}
+
+	return currentUser.DisplayName, err
+}
