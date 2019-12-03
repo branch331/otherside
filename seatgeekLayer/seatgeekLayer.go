@@ -48,7 +48,7 @@ func FindLocalEvents(postalCodes []string, genres []string, timeToday TimeToday)
 		}
 
 		if postCodeAlreadyCached {
-			redisData, err := redisLayer.GetSeatgeekEvents(postCode)
+			redisData, err := redisLayer.GetKeyBytes(postCode)
 
 			if err != nil {
 				fmt.Printf("Error getting value for postcode key %s in Redis: "+err.Error(), postCode)
@@ -155,7 +155,7 @@ func MakeSeatgeekEventsRequest(baseURL string, postCode string, timeToday TimeTo
 
 	if responseData["events"] == nil {
 		seatGeekChan <- nil
-		redisLayer.SetSeatgeekEvents(postCode, nil)
+		redisLayer.SetKeyBytes(postCode, nil)
 		close(seatGeekChan)
 	} else {
 		eventsFromResponse := responseData["events"].([]interface{})
@@ -197,7 +197,7 @@ func MakeSeatgeekEventsRequest(baseURL string, postCode string, timeToday TimeTo
 			fmt.Printf("Error marshalling seatgeek events data: " + err.Error())
 		}
 
-		redisLayer.SetSeatgeekEvents(postCode, seatGeekEventsSerialized)
+		redisLayer.SetKeyBytes(postCode, seatGeekEventsSerialized)
 
 		seatGeekChan <- seatGeekEvents
 		close(seatGeekChan)
