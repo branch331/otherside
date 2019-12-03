@@ -56,7 +56,7 @@ func GetTopSpotifyArtistTrack(artistID spotify.ID) (spotify.FullTrack, error) {
 	}
 
 	if topTrackAlreadyCached {
-		redisData, err := redisLayer.GetArtistTopTrack(string(artistID))
+		redisData, err := redisLayer.GetKeyBytes(string(artistID))
 		if err != nil {
 			fmt.Printf("Couldn't get value for artistID key %s in Redis: "+err.Error(), string(artistID))
 			return cachedTopTrack, err
@@ -82,7 +82,7 @@ func GetTopSpotifyArtistTrack(artistID spotify.ID) (spotify.FullTrack, error) {
 				fmt.Printf("Can't marshal artist %s top tracks: "+err.Error(), string(artistID))
 			}
 
-			redisLayer.SetArtistTopTrack(string(artistID), serializedTopTrack)
+			redisLayer.SetKeyBytes(string(artistID), serializedTopTrack)
 			return topTracks[0], nil
 		} else {
 			return cachedTopTrack, nil

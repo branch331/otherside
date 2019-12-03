@@ -2,7 +2,6 @@ package redisLayer
 
 import (
 	"fmt"
-
 	"github.com/gomodule/redigo/redis"
 )
 
@@ -11,38 +10,6 @@ var connection redis.Conn
 
 func Initialize() {
 	pool = newPool()
-}
-
-func SetSeatgeekEvents(postCode string, seatGeekEvents []byte) error {
-	if pool == nil {
-		Initialize()
-	}
-
-	conn := pool.Get()
-	defer conn.Close()
-
-	_, err := conn.Do("SET", postCode, seatGeekEvents)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func GetSeatgeekEvents(postCode string) ([]byte, error) {
-	if pool == nil {
-		Initialize()
-	}
-
-	conn := pool.Get()
-	defer conn.Close()
-
-	seatGeekEvents, err := redis.String(conn.Do("GET", postCode))
-	if err != nil {
-		fmt.Printf(err.Error())
-	}
-
-	return []byte(seatGeekEvents), nil
 }
 
 func SetKeyBytes(key string, value []byte) error {
@@ -75,38 +42,6 @@ func GetKeyBytes(key string) ([]byte, error) {
 	}
 
 	return []byte(value), nil
-}
-
-func SetArtistTopTrack(artistID string, topTrack []byte) error {
-	if pool == nil {
-		Initialize()
-	}
-
-	conn := pool.Get()
-	defer conn.Close()
-
-	_, err := conn.Do("SET", artistID, topTrack)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func GetArtistTopTrack(artistID string) ([]byte, error) {
-	if pool == nil {
-		Initialize()
-	}
-
-	conn := pool.Get()
-	defer conn.Close()
-
-	topTrack, err := redis.String(conn.Do("GET", artistID))
-	if err != nil {
-		fmt.Printf(err.Error())
-	}
-
-	return []byte(topTrack), nil
 }
 
 func SetKeyString(key string, value string) error {
@@ -167,28 +102,6 @@ func FlushDb() error {
 
 	_, err := conn.Do("FLUSHDB")
 	return err
-}
-
-func Ping() {
-	if pool == nil {
-		Initialize()
-	}
-
-	conn := pool.Get()
-	defer conn.Close()
-
-	pong, err := conn.Do("PING")
-
-	if err != nil {
-		fmt.Printf(err.Error())
-	}
-
-	s, err := redis.String(pong, err)
-	if err != nil {
-		fmt.Printf(err.Error())
-	}
-
-	fmt.Printf("PING resp: %s\n", s)
 }
 
 func newPool() *redis.Pool {
