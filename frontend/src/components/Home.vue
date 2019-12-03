@@ -376,7 +376,7 @@ export default {
 
       if (artists != null) {
         artists.forEach(function(artist) {
-          if (artist.Name != null) {
+          if (artist.Name != "" && artist.ImageURL != "") {
             tempArtistImages.push({"Name": artist.Name, "ImageURL": artist.ImageURL});
           }
         }); 

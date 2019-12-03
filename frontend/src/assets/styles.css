@@ -110,8 +110,8 @@ a {
 
 .performerSlide img {
   display: block;
-  width: auto;
-  height: auto;
+  height: 15em;
+  width: 15em;
 }
 
 #performerCarouselLeft {
