@@ -166,6 +166,13 @@ a {
     font-family: Circular,Helvetica Neue,Helvetica,Arial,sans-serif;
 }
 
+.playlistResult {
+  margin-top: 1em;
+  color: white;
+  font-weight: bold;
+  letter-spacing: 0.1em;
+}
+
 .navbar {
   margin: 0;
 }

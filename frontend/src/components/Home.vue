@@ -68,16 +68,16 @@
         </div>
         
         <div class="btnHolder" v-if="isStateStringCorrect">
-          <button class="btn" v-on:click="buildPlaylist('Spooky Title', 'Spooooky Description!')">Build Playlist</button>
+          <button class="btn" :disabled="playlistLoading" v-on:click="buildPlaylist('Spooky Title', 'Spooooky Description!')">Build Playlist</button>
         </div>
 
-        <div v-if="topTracks">
-          {{topTracks.length}}
+        <div class="playlistResult" v-if="playlistLoading === true">
+          <h4>Building playlist...</h4>
         </div>
 
-        <div v-if="artistImages">
-          {{artistImages}}
-          </div>
+        <div class="playlistResult" v-if="playlistStatus === 200">
+          <h4>{{topTracks.length}} tracks created!</h4>
+        </div>
 
       </div>
     </div>
@@ -143,7 +143,8 @@ export default {
       topTracks: null,
       artists: null,
       artistImages: null,
-      isStateStringCorrect: null
+      isStateStringCorrect: null,
+      playlistLoading: false
     }
   },
   computed: {
@@ -347,11 +348,15 @@ export default {
         artistIDs.push(value.Id);
       });
 
+      this.playlistLoading = true;
+      this.playlistStatus = null;
+
       axios.post(topTracksURL, JSON.stringify(artistIDs))
         .then((response => {
           this.topTracks = response.data;
           axios.post(buildPlaylistURL, JSON.stringify(response.data))
             .then((response => {
+              this.playlistLoading = false;
               this.playlistStatus = response.status;
           }));
         }));
