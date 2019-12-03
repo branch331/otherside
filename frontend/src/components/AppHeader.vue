@@ -15,7 +15,12 @@
           <b-nav-item-dropdown right>
             <!-- Using 'button-content' slot -->
             <template v-slot:button-content>
-              My Account
+              <span v-if="currentUser"> 
+                {{currentUser}}
+              </span>
+              <span v-else>
+                My Account
+              </span>
             </template>
             <b-dropdown-item href="#">Profile</b-dropdown-item>
             <b-dropdown-item href="#">Sign Out</b-dropdown-item>
@@ -26,7 +31,29 @@
 </template>
 
 <script>
+import axios from 'axios';
+
 export default {
-    name: 'AppHeader'
+  name: 'AppHeader',
+  props: ['stateString'],
+  data () {
+    return {
+      currentUser: null
+    }
+  },
+  mounted () {
+    if (this.stateString != null && this.$route.query.state == this.stateString) {
+      this.getCurrentUser();
+    }
+  },
+  methods: {
+    getCurrentUser: function() {
+      var currentUserURL = "http://localhost:8081/user";
+      axios.get(currentUserURL)
+        .then((response => {
+          this.currentUser = response.data;
+        }));
+    }
+  }
 }
 </script>

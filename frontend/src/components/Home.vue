@@ -1,7 +1,9 @@
 <template>
   <div class="home">
-    <div class="mainBody">
+    <AppHeader :stateString="stateString">
+    </AppHeader>
 
+    <div class="mainBody">
     <div class="row">
       <div class="leftsidebar col-md-4">
         <div class="selections">
@@ -91,6 +93,7 @@
 import axios from 'axios';
 import Vue from "vue";
 import Vuex from "vuex";
+import AppHeader from './AppHeader.vue';
 import PerformerCarousel from './PerformerCarousel.vue';
 import createPersistedState from "vuex-persistedstate";
 
@@ -132,7 +135,8 @@ export default {
   name: 'home',
   store,
   components: {
-    PerformerCarousel
+    PerformerCarousel,
+    AppHeader
   },
   data () {
     return {

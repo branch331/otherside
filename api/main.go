@@ -45,6 +45,7 @@ func main() {
 	router.HandleFunc("/authenticate", Authenticate)
 	router.HandleFunc("/callback", Callback)
 	router.HandleFunc("/localevents", LocalEvents)
+	router.HandleFunc("/user", User)
 	router.HandleFunc("/toptracks", TopTracks).Methods("POST")
 	router.HandleFunc("/artistids", ArtistIDs).Methods("POST")
 	router.HandleFunc("/buildplaylist", BuildPlaylist).Methods("POST")
@@ -186,6 +187,30 @@ func LocalEvents(w http.ResponseWriter, r *http.Request) {
 func QueryStringToArray(queryString string) []string {
 	testsArray := strings.Split(strings.Trim(queryString, "[]"), ",")
 	return testsArray
+}
+
+//GET
+func User(w http.ResponseWriter, r *http.Request) {
+	enableCors(&w)
+
+	currentUser, err := spotifyLayer.GetCurrentUser()
+	if err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(fmt.Sprintf("Error obtaining current user")))
+	}
+
+	currentUserJSON, err := json.Marshal(currentUser)
+
+	if err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(fmt.Sprintf("Error marshaling spotify user %s", currentUser)))
+	} else {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		w.Write(currentUserJSON)
+	}
 }
 
 //POST
