@@ -45,11 +45,10 @@ func TestFilterByGenres(t *testing.T) {
 }
 
 func TestSeatgeekEventsRequest(t *testing.T) {
+
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		//fmt.Fprintln(w, `{"key": "value"}`)
-		fmt.Fprintln(w,
-			`{"events": [{"title": "Winter Wonderland"},{"type": "concert"},{"datetime_local": "now"},{"venue": {"name": "The Stage","display_location": "The Stage","url": "myURL"}}]}`)
+		fmt.Fprint(w, `{"events": [{"title": "Winter Wonderland","type": "concert","datetime_local": "now","venue": {"name": "The Stage","display_location": "The Stage","url": "myURL"}, 		"performers": [{"short_name": "Billy Bob","genres": [{"slug": "rock"}]}]}]}`)
 	}))
 	defer ts.Close()
 
@@ -68,5 +67,5 @@ func TestSeatgeekEventsRequest(t *testing.T) {
 
 	events := <-eventsChan
 
-	fmt.Println(events)
+	fmt.Println(events[0].Title)
 }
