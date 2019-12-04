@@ -67,5 +67,21 @@ func TestSeatgeekEventsRequest(t *testing.T) {
 
 	events := <-eventsChan
 
-	fmt.Println(events[0].Title)
+	if events[0].Title != "Winter Wonderland" {
+		t.Errorf("Unexpected title: %s", events[0].Title)
+	} else if events[0].EventType != "concert" {
+		t.Errorf("Unexpected type: %s", events[0].EventType)
+	} else if events[0].URL != "myURL" {
+		t.Errorf("Unexpected URL: %s", events[0].URL)
+	} else if events[0].Performers[0] != "Billy Bob" {
+		t.Errorf("Unexpected Performer: %s", events[0].Performers[0])
+	} else if events[0].Genres[0] != "rock" {
+		t.Errorf("Unexpected genre: %s", events[0].Genres[0])
+	} else if events[0].LocalShowtime != "now" {
+		t.Errorf("Unexpected showtime: %s", events[0].LocalShowtime)
+	} else if events[0].VenueName != "The Stage" {
+		t.Errorf("Unexpected venue name: %s", events[0].VenueName)
+	} else if events[0].VenueLocation != "The Stage" {
+		t.Errorf("Unexpected venue location: %s", events[0].VenueLocation)
+	}
 }
