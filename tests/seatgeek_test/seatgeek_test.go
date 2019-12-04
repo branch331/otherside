@@ -44,11 +44,44 @@ func TestFilterByGenres(t *testing.T) {
 	}
 }
 
-func TestSeatgeekEventsRequest(t *testing.T) {
+func TestSeatgeekSingleEvent(t *testing.T) {
+	testTitle := "Winter Wonderland"
+	testType := "Concert"
+	testDatetime := "Now"
+	testVenueName := "The Stage"
+	testVenueLocation := "The Stage"
+	testVenueURL := "URL"
+	testPerformerName := "Billy Bob"
+	testPerformerGenreSlug := "rock"
 
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		fmt.Fprint(w, `{"events": [{"title": "Winter Wonderland","type": "concert","datetime_local": "now","venue": {"name": "The Stage","display_location": "The Stage","url": "myURL"}, 		"performers": [{"short_name": "Billy Bob","genres": [{"slug": "rock"}]}]}]}`)
+		fmt.Fprint(w, fmt.Sprintf(
+			`{"events": [
+				{
+					"title": "%s",
+					"type": "%s",
+					"datetime_local": "%s",
+					"venue": {"name": "%s",
+					"display_location": "%s",
+					"url": "%s"},
+					"performers": 
+					[
+						{
+							"short_name": "%s",
+							"genres": [{"slug": "%s"}]
+						}	
+					]
+				}		
+			]}`,
+			testTitle,
+			testType,
+			testDatetime,
+			testVenueName,
+			testVenueLocation,
+			testVenueURL,
+			testPerformerName,
+			testPerformerGenreSlug))
 	}))
 	defer ts.Close()
 
@@ -67,21 +100,121 @@ func TestSeatgeekEventsRequest(t *testing.T) {
 
 	events := <-eventsChan
 
-	if events[0].Title != "Winter Wonderland" {
+	if events[0].Title != testTitle {
 		t.Errorf("Unexpected title: %s", events[0].Title)
-	} else if events[0].EventType != "concert" {
+	} else if events[0].EventType != testType {
 		t.Errorf("Unexpected type: %s", events[0].EventType)
-	} else if events[0].URL != "myURL" {
+	} else if events[0].URL != testVenueURL {
 		t.Errorf("Unexpected URL: %s", events[0].URL)
-	} else if events[0].Performers[0] != "Billy Bob" {
+	} else if events[0].Performers[0] != testPerformerName {
 		t.Errorf("Unexpected Performer: %s", events[0].Performers[0])
-	} else if events[0].Genres[0] != "rock" {
+	} else if events[0].Genres[0] != testPerformerGenreSlug {
 		t.Errorf("Unexpected genre: %s", events[0].Genres[0])
-	} else if events[0].LocalShowtime != "now" {
+	} else if events[0].LocalShowtime != testDatetime {
 		t.Errorf("Unexpected showtime: %s", events[0].LocalShowtime)
-	} else if events[0].VenueName != "The Stage" {
+	} else if events[0].VenueName != testVenueName {
 		t.Errorf("Unexpected venue name: %s", events[0].VenueName)
-	} else if events[0].VenueLocation != "The Stage" {
+	} else if events[0].VenueLocation != testVenueLocation {
 		t.Errorf("Unexpected venue location: %s", events[0].VenueLocation)
+	}
+}
+
+func TestSeatgeekMultiEvents(t *testing.T) {
+	testTitle := "Winter Wonderland"
+	testType := "Concert"
+	testDatetime := "Now"
+	testVenueName := "The Stage"
+	testVenueLocation := "The Stage"
+	testVenueURL := "URL"
+	testPerformerName := "Billy Bob"
+	testPerformerGenreSlug := "rock"
+
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		fmt.Fprint(w, fmt.Sprintf(
+			`{"events": [
+				{
+					"title": "%s",
+					"type": "%s",
+					"datetime_local": "%s",
+					"venue": {"name": "%s",
+					"display_location": "%s",
+					"url": "%s"},
+					"performers": 
+					[
+						{
+							"short_name": "%s",
+							"genres": [{"slug": "%s"}]
+						}	
+					]
+				},
+				{
+					"title": "%s",
+					"type": "%s",
+					"datetime_local": "%s",
+					"venue": {"name": "%s",
+					"display_location": "%s",
+					"url": "%s"},
+					"performers": 
+					[
+						{
+							"short_name": "%s",
+							"genres": [{"slug": "%s"}]
+						}	
+					]
+				}	
+			]}`,
+			testTitle,
+			testType,
+			testDatetime,
+			testVenueName,
+			testVenueLocation,
+			testVenueURL,
+			testPerformerName,
+			testPerformerGenreSlug,
+			testTitle,
+			testType,
+			testDatetime,
+			testVenueName,
+			testVenueLocation,
+			testVenueURL,
+			testPerformerName,
+			testPerformerGenreSlug))
+	}))
+	defer ts.Close()
+
+	seatgeekURL := ts.URL
+	eventsChan := make(chan []seatgeekLayer.SeatGeekEvent)
+
+	var timeToday seatgeekLayer.TimeToday
+	UTCTimeLocation, err := time.LoadLocation("UTC")
+	if err != nil {
+		fmt.Printf("Error creating time LoadLocation: " + err.Error())
+	}
+
+	timeToday = seatgeekLayer.GetTimeToday(UTCTimeLocation)
+
+	go seatgeekLayer.MakeSeatgeekEventsRequest(seatgeekURL+"/test", "", timeToday, eventsChan)
+
+	events := <-eventsChan
+
+	for _, event := range events {
+		if event.Title != testTitle {
+			t.Errorf("Unexpected title: %s", events[0].Title)
+		} else if event.EventType != testType {
+			t.Errorf("Unexpected type: %s", events[0].EventType)
+		} else if event.URL != testVenueURL {
+			t.Errorf("Unexpected URL: %s", events[0].URL)
+		} else if event.Performers[0] != testPerformerName {
+			t.Errorf("Unexpected Performer: %s", events[0].Performers[0])
+		} else if event.Genres[0] != testPerformerGenreSlug {
+			t.Errorf("Unexpected genre: %s", events[0].Genres[0])
+		} else if event.LocalShowtime != testDatetime {
+			t.Errorf("Unexpected showtime: %s", events[0].LocalShowtime)
+		} else if event.VenueName != testVenueName {
+			t.Errorf("Unexpected venue name: %s", events[0].VenueName)
+		} else if event.VenueLocation != testVenueLocation {
+			t.Errorf("Unexpected venue location: %s", events[0].VenueLocation)
+		}
 	}
 }
