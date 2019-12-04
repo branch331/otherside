@@ -198,7 +198,7 @@ func MakeSeatgeekEventsRequest(baseURL string, postCode string, timeToday TimeTo
 		}
 
 		redisLayer.SetKeyBytes(postCode, seatGeekEventsSerialized)
-
+		
 		seatGeekChan <- seatGeekEvents
 		close(seatGeekChan)
 	}

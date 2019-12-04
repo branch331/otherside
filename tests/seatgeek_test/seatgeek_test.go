@@ -1,8 +1,12 @@
 package seatgeek_test
 
 import (
+	"fmt"
+	"net/http"
+	"net/http/httptest"
 	"otherside/api/seatgeekLayer"
 	"testing"
+	"time"
 )
 
 func TestFilterByGenres(t *testing.T) {
@@ -38,4 +42,31 @@ func TestFilterByGenres(t *testing.T) {
 	if filteredEvents[0].Title != "B" || filteredEvents[1].Title != "D" {
 		t.Errorf("Expected B and D for event titles. Got: %s and %s", filteredEvents[0].Title, filteredEvents[1].Title)
 	}
+}
+
+func TestSeatgeekEventsRequest(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		//fmt.Fprintln(w, `{"key": "value"}`)
+		fmt.Fprintln(w,
+			`{"events": [{"title": "Winter Wonderland"},{"type": "concert"},{"datetime_local": "now"},{"venue": {"name": "The Stage","display_location": "The Stage","url": "myURL"}}]}`)
+	}))
+	defer ts.Close()
+
+	seatgeekURL := ts.URL
+	eventsChan := make(chan []seatgeekLayer.SeatGeekEvent)
+
+	var timeToday seatgeekLayer.TimeToday
+	UTCTimeLocation, err := time.LoadLocation("UTC")
+	if err != nil {
+		fmt.Printf("Error creating time LoadLocation: " + err.Error())
+	}
+
+	timeToday = seatgeekLayer.GetTimeToday(UTCTimeLocation)
+
+	go seatgeekLayer.MakeSeatgeekEventsRequest(seatgeekURL+"/test", "", timeToday, eventsChan)
+
+	events := <-eventsChan
+
+	fmt.Println(events)
 }
