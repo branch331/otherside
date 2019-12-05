@@ -1,11 +1,10 @@
-package seatgeek_test
+package seatgeekLayer
 
 import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"os"
-	"otherside/api/seatgeekLayer"
 	"testing"
 	"time"
 )
@@ -41,34 +40,34 @@ func setup() {
 }
 
 func TestFilterByGenres(t *testing.T) {
-	events := []seatgeekLayer.SeatGeekEvent{
-		seatgeekLayer.SeatGeekEvent{
+	events := []SeatGeekEvent{
+		SeatGeekEvent{
 			Title:  "A",
 			Genres: []string{"rock", "hip-hop"},
 		},
-		seatgeekLayer.SeatGeekEvent{
+		SeatGeekEvent{
 			Title:  "B",
 			Genres: []string{"electronic", "hip-hop"},
 		},
-		seatgeekLayer.SeatGeekEvent{
+		SeatGeekEvent{
 			Title:  "C",
 			Genres: []string{"country", "rock"},
 		},
-		seatgeekLayer.SeatGeekEvent{
+		SeatGeekEvent{
 			Title:  "D",
 			Genres: []string{"indie"},
 		},
 	}
 
 	genreFilter := []string{"rock"}
-	filteredEvents := seatgeekLayer.FilterByGenres(events, genreFilter)
+	filteredEvents := FilterByGenres(events, genreFilter)
 
 	if filteredEvents[0].Title != "A" || filteredEvents[1].Title != "C" {
 		t.Errorf("Expected A and C for event titles. Got: %s and %s", filteredEvents[0].Title, filteredEvents[1].Title)
 	}
 
 	genreFilter = []string{"electronic", "indie"}
-	filteredEvents = seatgeekLayer.FilterByGenres(events, genreFilter)
+	filteredEvents = FilterByGenres(events, genreFilter)
 
 	if filteredEvents[0].Title != "B" || filteredEvents[1].Title != "D" {
 		t.Errorf("Expected B and D for event titles. Got: %s and %s", filteredEvents[0].Title, filteredEvents[1].Title)
@@ -108,17 +107,17 @@ func TestSeatgeekSingleEvent(t *testing.T) {
 	defer ts.Close()
 
 	seatgeekURL := ts.URL
-	eventsChan := make(chan []seatgeekLayer.SeatGeekEvent)
+	eventsChan := make(chan []SeatGeekEvent)
 
-	var timeToday seatgeekLayer.TimeToday
+	var timeToday TimeToday
 	UTCTimeLocation, err := time.LoadLocation("UTC")
 	if err != nil {
 		fmt.Printf("Error creating time LoadLocation: " + err.Error())
 	}
 
-	timeToday = seatgeekLayer.GetTimeToday(UTCTimeLocation)
+	timeToday = GetTimeToday(UTCTimeLocation)
 
-	go seatgeekLayer.MakeSeatgeekEventsRequest(seatgeekURL+"/test", "", timeToday, eventsChan)
+	go MakeSeatgeekEventsRequest(seatgeekURL+"/test", "", timeToday, eventsChan)
 
 	events := <-eventsChan
 
@@ -197,17 +196,17 @@ func TestSeatgeekMultiEvents(t *testing.T) {
 	defer ts.Close()
 
 	seatgeekURL := ts.URL
-	eventsChan := make(chan []seatgeekLayer.SeatGeekEvent)
+	eventsChan := make(chan []SeatGeekEvent)
 
-	var timeToday seatgeekLayer.TimeToday
+	var timeToday TimeToday
 	UTCTimeLocation, err := time.LoadLocation("UTC")
 	if err != nil {
 		fmt.Printf("Error creating time LoadLocation: " + err.Error())
 	}
 
-	timeToday = seatgeekLayer.GetTimeToday(UTCTimeLocation)
+	timeToday = GetTimeToday(UTCTimeLocation)
 
-	go seatgeekLayer.MakeSeatgeekEventsRequest(seatgeekURL+"/test", "", timeToday, eventsChan)
+	go MakeSeatgeekEventsRequest(seatgeekURL+"/test", "", timeToday, eventsChan)
 
 	events := <-eventsChan
 

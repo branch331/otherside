@@ -1,9 +1,8 @@
-package redis_test
+package redisLayer
 
 import (
 	"fmt"
 	"os"
-	"otherside/api/redisLayer"
 	"testing"
 )
 
@@ -21,7 +20,7 @@ func setup() {
 	testKeys = append(testKeys, "Apple", "Orange", "Banana")
 	testValues = append(testValues, "Red", "Orange", "Yellow")
 
-	err := redisLayer.FlushDb()
+	err := FlushDb()
 	if err != nil {
 		fmt.Printf("Error flushing redis db: %s", err.Error())
 	}
@@ -29,9 +28,9 @@ func setup() {
 
 func TestKeyReadWrite(t *testing.T) {
 	for i, key := range testKeys {
-		redisLayer.SetKeyString(key, testValues[i])
+		SetKeyString(key, testValues[i])
 
-		exists, err := redisLayer.Exists(key)
+		exists, err := Exists(key)
 		if err != nil {
 			fmt.Printf("Error checking if key exists: %s", err.Error())
 		}
@@ -39,7 +38,7 @@ func TestKeyReadWrite(t *testing.T) {
 			t.Errorf("Key %s does not exist in Redis db", key)
 		}
 
-		value, err := redisLayer.GetKeyString(key)
+		value, err := GetKeyString(key)
 		if err != nil {
 			fmt.Printf("Error looking up value for key: %s", err.Error())
 		}
@@ -53,9 +52,9 @@ func TestKeyReadWrite(t *testing.T) {
 func TestBytesReadWrite(t *testing.T) {
 	for i, key := range testKeys {
 
-		redisLayer.SetKeyBytes(key, []byte(testValues[i]))
+		SetKeyBytes(key, []byte(testValues[i]))
 
-		exists, err := redisLayer.Exists(key)
+		exists, err := Exists(key)
 		if err != nil {
 			fmt.Printf("Error checking if key exists: %s", err.Error())
 		}
@@ -63,7 +62,7 @@ func TestBytesReadWrite(t *testing.T) {
 			t.Errorf("Key %s does not exist in Redis db", key)
 		}
 
-		value, err := redisLayer.GetKeyBytes(key)
+		value, err := GetKeyBytes(key)
 		if err != nil {
 			fmt.Printf("Error looking up value for key: %s", err.Error())
 		}
@@ -75,7 +74,7 @@ func TestBytesReadWrite(t *testing.T) {
 }
 
 func teardown() {
-	err := redisLayer.FlushDb()
+	err := FlushDb()
 	if err != nil {
 		fmt.Printf("Error flushing redis db: %s", err.Error())
 	}
