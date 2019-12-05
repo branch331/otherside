@@ -154,13 +154,19 @@ func LocalEvents(w http.ResponseWriter, r *http.Request) {
 	enableCors(&w)
 
 	cities, ok := r.URL.Query()["cities"]
-	if !ok || len(cities[0]) < 1 {
-		fmt.Printf("cities parameter missing from localevents request.")
+	if !ok || len(cities) < 1 {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(fmt.Sprintf("Cities array parameter missing from request.")))
+		return
 	}
 
 	genres, ok := r.URL.Query()["genres"]
-	if !ok || len(genres[0]) < 1 {
-		fmt.Printf("genres parameter missing from localevents request.")
+	if !ok || len(genres) < 1 {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(fmt.Sprintf("Genres array parameter missing from request.")))
+		return
 	}
 
 	citiesArray := QueryStringToArray(cities[0])
@@ -382,17 +388,19 @@ func BuildPlaylist(w http.ResponseWriter, r *http.Request) {
 	enableCors(&w)
 
 	playlistName, ok := r.URL.Query()["name"]
-	if !ok || len(playlistName[0]) < 1 {
+	if !ok || len(playlistName) < 1 {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte("Playlist 'name' parameter missing from buildplaylist request."))
+		w.Write([]byte("name parameter missing from request."))
+		return
 	}
 
 	playlistDesc, ok := r.URL.Query()["desc"]
-	if !ok || len(playlistDesc[0]) < 1 {
+	if !ok || len(playlistDesc) < 1 {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte("Playlist 'desc' parameter missing from buildplaylist request."))
+		w.Write([]byte("desc parameter missing from request."))
+		return
 	}
 
 	var topTracks []spotify.FullTrack
@@ -402,6 +410,7 @@ func BuildPlaylist(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte("Error decoding Spotify Top Tracks: " + err.Error()))
+		return
 	}
 
 	playlistID, err := spotifyLayer.GeneratePlayList(playlistName[0], playlistDesc[0])
@@ -409,6 +418,7 @@ func BuildPlaylist(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte("Error generating playlist: " + err.Error()))
+		return
 	}
 
 	err = spotifyLayer.AddTracksToPlaylist(playlistID, topTracks)
@@ -416,6 +426,7 @@ func BuildPlaylist(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte("Error adding tracks to playlist: " + err.Error()))
+		return
 	} else {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
@@ -423,22 +434,15 @@ func BuildPlaylist(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-//POST
-func ConfigureCallbackURL(w http.ResponseWriter, r *http.Request) {
-	enableCors(&w)
-
-	redirectURL, ok := r.URL.Query()["redirectURL"]
-	if !ok || len(redirectURL[0]) < 1 {
-		fmt.Printf("redirectURL parameter missing from configuration request.")
-	}
-}
-
 //GET
 //Callback is called from the Spotify authentication flow, and redirects to <Host>/#/callback
 func Callback(w http.ResponseWriter, r *http.Request) {
 	state, ok := r.URL.Query()["state"]
-	if !ok || len(state[0]) < 1 {
-		fmt.Printf("State parameter missing from callback.")
+	if !ok || len(state) < 1 {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(fmt.Sprintf("State parameter missing from request.")))
+		return
 	}
 
 	spotifyLayer.SetNewSpotifyClient(w, r, state[0])
