@@ -6,37 +6,22 @@
     <div class="mainBody">
     <div class="row">
       <div class="leftsidebar col-md-4">
-        <div class="selections">
-          <h5>1. Pick some cities</h5>
-          <ul v-if="selectedCities">
-            <li v-for="city in selectedCities" v-bind:key="city" v-on:click="transferArrayValue(selectedCities, availableCities, city)">
-              {{city}} <span class="selectedX">X</span>
-            </li>
-          </ul>
+            {{selectedCities}}
 
-          <h5>Available Cities</h5>
-          <ul v-if="availableCities">
-            <li v-for="city in availableCities" v-bind:key="city" v-on:click="transferArrayValue(availableCities, selectedCities, city)">
-              {{city}} <span class="selectedX">X</span>
-            </li>
-          </ul>
-        </div>
+        <Selector 
+          selectorName="cities"
+          maxItems="6"
+          v-bind:selectedItems="selectedCities"
+          v-bind:availableItems="availableCities">
+        </Selector>
 
-        <div class="selections">
-          <h5>2. Pick some genres</h5>
-          <ul v-if="selectedGenres">
-            <li v-for="genre in selectedGenres" v-bind:key="genre" v-on:click="transferArrayValue(selectedGenres, availableGenres, genre)">
-              {{genre}} <span class="selectedX">X</span>
-            </li>
-          </ul>
-
-          <h5>Available Genres</h5>
-          <ul v-if="availableGenres">
-            <li v-for="genre in availableGenres" v-bind:key="genre" v-on:click="transferArrayValue(availableGenres, selectedGenres, genre)">
-              {{genre}} <span class="selectedX">X</span>
-            </li>
-          </ul>
-        </div>
+    {{selectedGenres}}
+        <Selector 
+          selectorName="genres"
+          maxItems="10"
+          v-bind:selectedItems="selectedGenres"
+          v-bind:availableItems="availableGenres">
+        </Selector>
       </div>
 
       <div class="playlistcontent col-md-6">
@@ -95,6 +80,7 @@ import Vue from "vue";
 import Vuex from "vuex";
 import AppHeader from './AppHeader.vue';
 import PerformerCarousel from './PerformerCarousel.vue';
+import Selector from './Selector.vue';
 import createPersistedState from "vuex-persistedstate";
 
 Vue.use(Vuex);
@@ -135,8 +121,9 @@ export default {
   name: 'home',
   store,
   components: {
+    AppHeader,
     PerformerCarousel,
-    AppHeader
+    Selector
   },
   data () {
     return {
@@ -193,9 +180,35 @@ export default {
       }
     }
   },
+  watch: {
+    'selectedCities': function() {
+      if (this.selectedCities.length != 0 && this.selectedGenres.length != 0) {
+        store.commit("UPDATE_SELECTED_CITIES", this.selectedCities);
+        store.commit("UPDATE_AVAILABLE_CITIES", this.availableCities);
+
+        this.getLocalEvents(this.selectedCities, this.selectedGenres);
+      } else {
+        this.localEvents = null;
+        this.localPerformers = null;
+        this.artistImages = null;
+      }
+    },
+    'selectedGenres': function() {
+      if (this.selectedCities.length != 0 && this.selectedGenres.length != 0) {
+        store.commit("UPDATE_SELECTED_GENRES", this.selectedGenres);
+        store.commit("UPDATE_AVAILABLE_GENRES", this.availableGenres);
+
+        this.getLocalEvents(this.selectedCities, this.selectedGenres);
+      } else {
+        this.localEvents = null;
+        this.localPerformers = null;
+        this.artistImages = null;
+      }
+    }
+  },
   mounted () {
     this.initializeStore();
-    
+
     if (this.selectedCities.length != 0 && this.selectedGenres.length != 0) {
       this.getLocalEvents(this.selectedCities, this.selectedGenres);
     } 
@@ -217,46 +230,6 @@ export default {
       }
       if (this.availableGenres == null) {
         this.getAvailableGenres();
-      }
-    },
-    transferArrayValue: function(sourceArray, targetArray, value) {
-      var index = sourceArray.indexOf(value);
-      if (index > -1) {
-
-        if (!(targetArray == this.selectedCities && targetArray.length == 6) && 
-        !(targetArray == this.selectedGenres && targetArray.length == 10)) {
-          if (sourceArray == this.selectedCities) {
-            sourceArray.splice(index, 1);
-            targetArray.push(value);
-            this.selectedCities = sourceArray;
-            this.availableCities = targetArray;
-          } 
-          else if (sourceArray == this.availableCities) {
-            sourceArray.splice(index, 1);
-            targetArray.push(value);
-            this.availableCities = sourceArray;
-            this.selectedCities = targetArray;
-          }
-          else if (sourceArray == this.selectedGenres) {
-            sourceArray.splice(index, 1);
-            targetArray.push(value);
-            this.selectedGenres = sourceArray;
-            this.availableGenres = targetArray;
-          }
-          else if (sourceArray == this.availableGenres) {
-            sourceArray.splice(index, 1);
-            targetArray.push(value);
-            this.availableGenres = sourceArray;
-            this.selectedGenres = targetArray;
-          }
-        }
-      }
-      if (this.selectedCities.length != 0 && this.selectedGenres.length != 0) {
-        this.getLocalEvents(this.selectedCities, this.selectedGenres);
-      } else {
-        this.localEvents = null;
-        this.localPerformers = null;
-        this.artistImages = null;
       }
     },
     getAvailableCities: function() {
