@@ -13,6 +13,11 @@ import (
 
 var spotifyAuth = spotify.NewAuthenticator(redirectURL, spotify.ScopePlaylistModifyPublic)
 
+//For testing only
+var testClients = make(map[string]spotify.Client)
+
+//For testing only
+
 var applicationPort = "8081"
 var baseURL = "http://localhost:" + applicationPort + "/"
 var redirectURL = baseURL + "callback"
@@ -66,6 +71,10 @@ func SetNewSpotifyClient(w http.ResponseWriter, r *http.Request, state string) (
 	}
 
 	err = redisLayer.SetKeyBytes(token.AccessToken, newSpotifyClientJSON)
+
+	//Testing only
+	testClients[token.AccessToken] = newSpotifyClient
+	//Testing only
 
 	if err != nil {
 		return "", err
@@ -255,6 +264,10 @@ func ObtainSpotifyClient(token string) (spotify.Client, error) {
 	if err != nil {
 		fmt.Printf("Error unmarshalling value for spotify client from Redis: " + err.Error())
 	}
+
+	//Testing only
+	spotifyClient = testClients[token]
+	//Testing only
 
 	return spotifyClient, nil
 }
