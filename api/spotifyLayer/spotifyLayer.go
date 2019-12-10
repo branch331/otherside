@@ -12,7 +12,6 @@ import (
 )
 
 var spotifyAuth = spotify.NewAuthenticator(redirectURL, spotify.ScopePlaylistModifyPublic)
-var spotifyClient spotify.Client
 
 var applicationPort = "8081"
 var baseURL = "http://localhost:" + applicationPort + "/"
@@ -75,7 +74,7 @@ func SetNewSpotifyClient(w http.ResponseWriter, r *http.Request, state string) (
 	return token.AccessToken, nil
 }
 
-func GetTopSpotifyArtistTrack(artistID spotify.ID) (spotify.FullTrack, error) {
+func GetTopSpotifyArtistTrack(token string, artistID spotify.ID) (spotify.FullTrack, error) {
 	var cachedTopTrack spotify.FullTrack
 
 	topTrackAlreadyCached, err := redisLayer.Exists(string(artistID))
@@ -100,6 +99,12 @@ func GetTopSpotifyArtistTrack(artistID spotify.ID) (spotify.FullTrack, error) {
 		return cachedTopTrack, nil
 	}
 
+	spotifyClient, err := ObtainSpotifyClient(token)
+	if err != nil {
+		fmt.Printf("Error obtaining spotify client: " + err.Error())
+		return cachedTopTrack, err
+	}
+
 	topTracks, err := spotifyClient.GetArtistsTopTracks(artistID, "US")
 	if err != nil {
 		fmt.Printf("Can't obtain artist %s top tracks: "+err.Error(), string(artistID))
@@ -119,8 +124,14 @@ func GetTopSpotifyArtistTrack(artistID spotify.ID) (spotify.FullTrack, error) {
 	}
 }
 
-func GeneratePlayList(playlistName string, description string) (spotify.ID, error) {
+func GeneratePlayList(token string, playlistName string, description string) (spotify.ID, error) {
 	flag.Parse()
+
+	spotifyClient, err := ObtainSpotifyClient(token)
+	if err != nil {
+		fmt.Printf("Error obtaining spotify client: " + err.Error())
+		return "", err
+	}
 
 	currentUser, err := spotifyClient.CurrentUser()
 	if err != nil {
@@ -141,7 +152,13 @@ func GeneratePlayList(playlistName string, description string) (spotify.ID, erro
 	return playList.ID, nil
 }
 
-func AddTracksToPlaylist(playlistID spotify.ID, tracksToAdd []spotify.FullTrack) error {
+func AddTracksToPlaylist(token string, playlistID spotify.ID, tracksToAdd []spotify.FullTrack) error {
+	spotifyClient, err := ObtainSpotifyClient(token)
+	if err != nil {
+		fmt.Printf("Error obtaining spotify client: " + err.Error())
+		return err
+	}
+
 	for _, track := range tracksToAdd {
 		_, err := spotifyClient.AddTracksToPlaylist(playlistID, track.ID)
 		if err != nil {
@@ -153,7 +170,7 @@ func AddTracksToPlaylist(playlistID spotify.ID, tracksToAdd []spotify.FullTrack)
 	return nil
 }
 
-func SearchAndFindSpotifyArtistID(artistName string) (SpotifyArtistImage, error) {
+func SearchAndFindSpotifyArtistID(token string, artistName string) (SpotifyArtistImage, error) {
 	var spotifyArtistImage SpotifyArtistImage
 
 	artistNameAlreadyCached, err := redisLayer.Exists(artistName)
@@ -176,6 +193,12 @@ func SearchAndFindSpotifyArtistID(artistName string) (SpotifyArtistImage, error)
 		}
 
 		return spotifyArtistImage, nil
+	}
+
+	spotifyClient, err := ObtainSpotifyClient(token)
+	if err != nil {
+		fmt.Printf("Error obtaining spotify client: " + err.Error())
+		return spotifyArtistImage, err
 	}
 
 	searchResults, err := spotifyClient.Search(artistName, spotify.SearchTypeArtist)
@@ -202,7 +225,13 @@ func SearchAndFindSpotifyArtistID(artistName string) (SpotifyArtistImage, error)
 	return spotifyArtistImage, nil
 }
 
-func GetCurrentUser() (string, error) {
+func GetCurrentUser(token string) (string, error) {
+
+	spotifyClient, err := ObtainSpotifyClient(token)
+	if err != nil {
+		fmt.Printf("Error obtaining spotify client: " + err.Error())
+		return "", err
+	}
 
 	currentUser, err := spotifyClient.CurrentUser()
 	if err != nil {
@@ -211,4 +240,21 @@ func GetCurrentUser() (string, error) {
 	}
 
 	return currentUser.DisplayName, err
+}
+
+func ObtainSpotifyClient(token string) (spotify.Client, error) {
+	var spotifyClient spotify.Client
+
+	redisData, err := redisLayer.GetKeyBytes(token)
+	if err != nil {
+		fmt.Printf("Error obtaining spotify client in Redis: " + err.Error())
+		return spotifyClient, err
+	}
+
+	json.Unmarshal(redisData, &spotifyClient)
+	if err != nil {
+		fmt.Printf("Error unmarshalling value for spotify client from Redis: " + err.Error())
+	}
+
+	return spotifyClient, nil
 }

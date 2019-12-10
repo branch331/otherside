@@ -49,8 +49,14 @@ export default {
   },
   methods: {
     getCurrentUser: function() {
+      const auth = {
+        headers: {
+          'Authorization': `Bearer ${this.token}`
+        }
+      }
+
       var currentUserURL = "http://localhost:8081/user";
-      axios.get(currentUserURL)
+      axios.get(currentUserURL, auth)
         .then((response => {
           this.currentUser = response.data;
         }));
