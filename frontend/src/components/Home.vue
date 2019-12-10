@@ -329,7 +329,13 @@ export default {
     getArtistIDs: function(events) {
       var artistIDsURL = "http://localhost:8081/artistids";
 
-      axios.post(artistIDsURL, JSON.stringify(events))
+      const auth = {
+        headers: {
+          'Authorization': `Bearer ${this.token}`
+        }
+      }
+
+      axios.post(artistIDsURL, JSON.stringify(events), auth)
         .then((response => {
           this.artists = response.data;
           this.setArtistImagesArray(this.artists);
@@ -357,10 +363,16 @@ export default {
       this.playlistLoading = true;
       this.playlistStatus = null;
 
-      axios.post(topTracksURL, JSON.stringify(artistIDs))
+      const auth = {
+        headers: {
+          'Authorization': `Bearer ${this.token}`
+        }
+      }
+
+      axios.post(topTracksURL, JSON.stringify(artistIDs), auth)
         .then((response => {
           this.topTracks = response.data;
-          axios.post(buildPlaylistURL, JSON.stringify(response.data))
+          axios.post(buildPlaylistURL, JSON.stringify(response.data), auth)
             .then((response => {
               this.playlistLoading = false;
               this.playlistStatus = response.status;
