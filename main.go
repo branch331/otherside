@@ -199,7 +199,9 @@ func QueryStringToArray(queryString string) []string {
 func User(w http.ResponseWriter, r *http.Request) {
 	enableCors(&w)
 
-	currentUser, err := spotifyLayer.GetCurrentUser()
+	token := ExtractTokenFromHeader(r)
+
+	currentUser, err := spotifyLayer.GetCurrentUser(token)
 	if err != nil {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusInternalServerError)
@@ -230,6 +232,8 @@ func ArtistIDs(w http.ResponseWriter, r *http.Request) {
 
 	time.Sleep(200 * time.Millisecond)
 
+	token := ExtractTokenFromHeader(r)
+
 	var localSeatGeekEvents []seatgeekLayer.SeatGeekEvent
 	var artists []spotifyLayer.SpotifyArtistImage
 
@@ -247,7 +251,7 @@ func ArtistIDs(w http.ResponseWriter, r *http.Request) {
 		for _, performer := range event.Performers {
 			artistChan := make(chan ArtistIDResponse)
 			artistChannels = append(artistChannels, artistChan)
-			go GetArtistID(performer, artistChan)
+			go GetArtistID(token, performer, artistChan)
 		}
 	}
 	cases := make([]reflect.SelectCase, len(artistChannels))
@@ -313,12 +317,13 @@ func TopTracks(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var topTrackChannels []chan TopTrackResponse
+	token := ExtractTokenFromHeader(r)
 
 	t4 := time.Now()
 	for _, ID := range artistIDs {
 		topTrackChan := make(chan TopTrackResponse)
 		topTrackChannels = append(topTrackChannels, topTrackChan)
-		go GetArtistTopTrack(ID, topTrackChan)
+		go GetArtistTopTrack(token, ID, topTrackChan)
 	}
 	cases := make([]reflect.SelectCase, len(topTrackChannels))
 
@@ -359,10 +364,10 @@ func TopTracks(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func GetArtistID(performer string, artistChan chan<- ArtistIDResponse) {
+func GetArtistID(token string, performer string, artistChan chan<- ArtistIDResponse) {
 	var response ArtistIDResponse
 
-	artist, err := spotifyLayer.SearchAndFindSpotifyArtistID(performer)
+	artist, err := spotifyLayer.SearchAndFindSpotifyArtistID(token, performer)
 	if err != nil {
 		response.err = err
 		artistChan <- response
@@ -377,11 +382,11 @@ func GetArtistID(performer string, artistChan chan<- ArtistIDResponse) {
 	}
 }
 
-func GetArtistTopTrack(artistID spotify.ID, topTrackChan chan<- TopTrackResponse) {
+func GetArtistTopTrack(token string, artistID spotify.ID, topTrackChan chan<- TopTrackResponse) {
 	var response TopTrackResponse
 
 	if artistID != "" {
-		topArtistTrack, err := spotifyLayer.GetTopSpotifyArtistTrack(artistID)
+		topArtistTrack, err := spotifyLayer.GetTopSpotifyArtistTrack(token, artistID)
 		response.Track = topArtistTrack
 		response.ArtistExists = true
 		response.err = err
@@ -430,7 +435,9 @@ func BuildPlaylist(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	playlistID, err := spotifyLayer.GeneratePlayList(playlistName[0], playlistDesc[0])
+	token := ExtractTokenFromHeader(r)
+
+	playlistID, err := spotifyLayer.GeneratePlayList(token, playlistName[0], playlistDesc[0])
 	if err != nil {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusInternalServerError)
@@ -438,7 +445,7 @@ func BuildPlaylist(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = spotifyLayer.AddTracksToPlaylist(playlistID, topTracks)
+	err = spotifyLayer.AddTracksToPlaylist(token, playlistID, topTracks)
 	if err != nil {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusInternalServerError)
@@ -507,6 +514,11 @@ func Callback(w http.ResponseWriter, r *http.Request) {
 	redirectURL := clientOrigin + "/#/?state=" + state[0] + "&token=" + accessToken
 
 	http.Redirect(w, r, redirectURL, http.StatusSeeOther)
+}
+
+func ExtractTokenFromHeader(r *http.Request) string {
+	tokenHeader := r.Header.Get("Authorization")
+	return tokenHeader[7:]
 }
 
 func enableCors(w *http.ResponseWriter) {
