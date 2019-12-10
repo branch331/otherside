@@ -29,7 +29,7 @@ export default {
         selectorName: String,
         selectedItems: Array,
         availableItems: Array,
-        maxItems: Number
+        maxItems: String
     },
     data () {
         return {
