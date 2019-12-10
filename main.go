@@ -44,12 +44,11 @@ func main() {
 	router.HandleFunc("/genres", Genres)
 	router.HandleFunc("/authenticate", Authenticate)
 	router.HandleFunc("/callback", Callback)
-	router.HandleFunc("/token", Token)
 	router.HandleFunc("/localevents", LocalEvents)
 	router.HandleFunc("/user", User)
-	router.HandleFunc("/toptracks", TopTracks).Methods("POST")
-	router.HandleFunc("/artistids", ArtistIDs).Methods("POST")
-	router.HandleFunc("/buildplaylist", BuildPlaylist).Methods("POST")
+	router.HandleFunc("/toptracks", TopTracks).Methods("POST", "OPTIONS")
+	router.HandleFunc("/artistids", ArtistIDs).Methods("POST", "OPTIONS")
+	router.HandleFunc("/buildplaylist", BuildPlaylist).Methods("POST", "OPTIONS")
 
 	log.Fatal(http.ListenAndServe(":"+applicationPort, router))
 }
@@ -223,6 +222,12 @@ func User(w http.ResponseWriter, r *http.Request) {
 //POST
 func ArtistIDs(w http.ResponseWriter, r *http.Request) {
 	enableCors(&w)
+
+	if r.Method == "OPTIONS" {
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+
 	time.Sleep(200 * time.Millisecond)
 
 	var localSeatGeekEvents []seatgeekLayer.SeatGeekEvent
@@ -289,6 +294,12 @@ func ArtistIDs(w http.ResponseWriter, r *http.Request) {
 //POST
 func TopTracks(w http.ResponseWriter, r *http.Request) {
 	enableCors(&w)
+
+	if r.Method == "OPTIONS" {
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+
 	time.Sleep(200 * time.Millisecond)
 
 	var artistIDs []spotify.ID
@@ -387,6 +398,11 @@ func GetArtistTopTrack(artistID spotify.ID, topTrackChan chan<- TopTrackResponse
 //POST
 func BuildPlaylist(w http.ResponseWriter, r *http.Request) {
 	enableCors(&w)
+
+	if r.Method == "OPTIONS" {
+		w.WriteHeader(http.StatusOK)
+		return
+	}
 
 	playlistName, ok := r.URL.Query()["name"]
 	if !ok || len(playlistName) < 1 {
@@ -493,39 +509,8 @@ func Callback(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, redirectURL, http.StatusSeeOther)
 }
 
-//GET
-func Token(w http.ResponseWriter, r *http.Request) {
-	enableCors(&w)
-
-	state, ok := r.URL.Query()["state"]
-	if !ok || len(state) < 1 {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(fmt.Sprintf("State parameter missing from request.")))
-		return
-	}
-
-	stateExists, err := redisLayer.Exists(state[0])
-
-	if !stateExists {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(fmt.Sprintf("Invalid state parameter.")))
-		return
-	}
-
-	accessToken, err := spotifyLayer.SetNewSpotifyClient(w, r, state[0])
-
-	if err != nil {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(fmt.Sprintf("Error setting new spotify client: " + err.Error())))
-		return
-	}
-
-	fmt.Fprint(w, accessToken)
-}
-
 func enableCors(w *http.ResponseWriter) {
 	(*w).Header().Set("Access-Control-Allow-Origin", "*")
+	(*w).Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
+	(*w).Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
 }
