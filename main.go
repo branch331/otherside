@@ -44,6 +44,7 @@ func main() {
 	router.HandleFunc("/genres", Genres)
 	router.HandleFunc("/authenticate", Authenticate)
 	router.HandleFunc("/callback", Callback)
+	router.HandleFunc("/token", Token)
 	router.HandleFunc("/localevents", LocalEvents)
 	router.HandleFunc("/user", User)
 	router.HandleFunc("/toptracks", TopTracks).Methods("POST")
@@ -435,29 +436,6 @@ func BuildPlaylist(w http.ResponseWriter, r *http.Request) {
 }
 
 //GET
-//Callback is called from the Spotify authentication flow, and redirects to <Host>/#/callback
-func Callback(w http.ResponseWriter, r *http.Request) {
-	state, ok := r.URL.Query()["state"]
-	if !ok || len(state) < 1 {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(fmt.Sprintf("State parameter missing from request.")))
-		return
-	}
-
-	spotifyLayer.SetNewSpotifyClient(w, r, state[0])
-
-	clientOrigin, err := redisLayer.GetKeyString(state[0])
-	if err != nil {
-		fmt.Printf("Error getting state/origin Redis key: " + err.Error())
-	}
-
-	redirectURL := clientOrigin + "/#/?state=" + state[0]
-
-	http.Redirect(w, r, redirectURL, http.StatusSeeOther)
-}
-
-//GET
 func Authenticate(w http.ResponseWriter, r *http.Request) {
 	enableCors(&w)
 
@@ -483,6 +461,69 @@ func Authenticate(w http.ResponseWriter, r *http.Request) {
 
 	authenticationUrl := spotifyLayer.ObtainAuthenticationURL(state[0])
 	fmt.Fprint(w, authenticationUrl)
+}
+
+//GET
+//Callback is called from the Spotify authentication flow, and redirects to <Host>/#/callback
+func Callback(w http.ResponseWriter, r *http.Request) {
+	state, ok := r.URL.Query()["state"]
+	if !ok || len(state) < 1 {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(fmt.Sprintf("State parameter missing from request.")))
+		return
+	}
+
+	accessToken, err := spotifyLayer.SetNewSpotifyClient(w, r, state[0])
+
+	if err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(fmt.Sprintf("Error setting new spotify client: " + err.Error())))
+		return
+	}
+
+	clientOrigin, err := redisLayer.GetKeyString(state[0])
+	if err != nil {
+		fmt.Printf("Error getting state/origin Redis key: " + err.Error())
+	}
+
+	redirectURL := clientOrigin + "/#/?state=" + state[0] + "&token=" + accessToken
+
+	http.Redirect(w, r, redirectURL, http.StatusSeeOther)
+}
+
+//GET
+func Token(w http.ResponseWriter, r *http.Request) {
+	enableCors(&w)
+
+	state, ok := r.URL.Query()["state"]
+	if !ok || len(state) < 1 {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(fmt.Sprintf("State parameter missing from request.")))
+		return
+	}
+
+	stateExists, err := redisLayer.Exists(state[0])
+
+	if !stateExists {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(fmt.Sprintf("Invalid state parameter.")))
+		return
+	}
+
+	accessToken, err := spotifyLayer.SetNewSpotifyClient(w, r, state[0])
+
+	if err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(fmt.Sprintf("Error setting new spotify client: " + err.Error())))
+		return
+	}
+
+	fmt.Fprint(w, accessToken)
 }
 
 func enableCors(w *http.ResponseWriter) {
