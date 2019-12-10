@@ -38,11 +38,12 @@ export default {
   props: ['stateString'],
   data () {
     return {
-      currentUser: null
+      currentUser: null,
+      token: null
     }
   },
   mounted () {
-    if (this.stateString != null && this.$route.query.state == this.stateString) {
+    if (this.token) {
       this.getCurrentUser();
     }
   },

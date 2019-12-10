@@ -33,17 +33,46 @@ func ObtainAuthenticationURL(state string) string {
 	return spotifyAuth.AuthURL(state)
 }
 
-func SetNewSpotifyClient(w http.ResponseWriter, r *http.Request, state string) error {
+func SetNewSpotifyClient(w http.ResponseWriter, r *http.Request, state string) (string, error) {
 	token, err := spotifyAuth.Token(state, r)
 
 	if err != nil {
-		http.Error(w, "Couldn't get token", http.StatusNotFound)
-		return err
+		fmt.Printf("Couldn't get token: " + err.Error())
+		return "", err
 	}
 
-	spotifyClient = spotifyAuth.NewClient(token)
+	newSpotifyClient := spotifyAuth.NewClient(token)
 
-	return nil
+	accessTokenExists, err := redisLayer.Exists(token.AccessToken)
+
+	if err != nil {
+		http.Error(w, "Couldn't check if Redis token exists", http.StatusNotFound)
+		return "", err
+	}
+
+	if accessTokenExists {
+		storedToken, err := redisLayer.GetKeyString(token.AccessToken)
+
+		if err != nil {
+			return "", err
+		}
+
+		return storedToken, nil
+	}
+
+	newSpotifyClientJSON, err := json.Marshal(newSpotifyClient)
+
+	if err != nil {
+		return "", err
+	}
+
+	err = redisLayer.SetKeyBytes(token.AccessToken, newSpotifyClientJSON)
+
+	if err != nil {
+		return "", err
+	}
+
+	return token.AccessToken, nil
 }
 
 func GetTopSpotifyArtistTrack(artistID spotify.ID) (spotify.FullTrack, error) {

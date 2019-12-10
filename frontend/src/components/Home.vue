@@ -58,6 +58,13 @@
           <button class="btn" :disabled="playlistLoading" v-on:click="buildPlaylist('Spooky Title', 'Spooooky Description!')">Build Playlist</button>
         </div>
 
+        <div v-if="token">
+          {{token}}
+        </div>
+        <div v-if="localEvents">
+        {{localEvents}}
+        </div>
+
         <div class="playlistResult" v-if="playlistLoading === true">
           <h4>Building playlist...</h4>
         </div>
@@ -90,7 +97,8 @@ const state = {
   selectedGenres: null,
   availableCities: null,
   availableGenres: null,
-  stateString: null
+  stateString: null,
+  token: null
 };
 
 const mutations = {
@@ -108,6 +116,9 @@ const mutations = {
   },
   UPDATE_STATE_STRING(state, newValue) {
     state.stateString = newValue;
+  },
+  UPDATE_TOKEN(state, newValue) {
+    state.token = newValue;
   }
 };
 
@@ -178,6 +189,14 @@ export default {
       set: function(newValue) {
         store.commit("UPDATE_STATE_STRING", newValue);
       }
+    },
+    token: {
+      get: function() {
+        return store.state.token;
+      },
+      set: function(newValue) {
+        store.commit("UPDATE_TOKEN", newValue);
+      }
     }
   },
   watch: {
@@ -216,6 +235,7 @@ export default {
       this.setNewSpotifyAuthenticationUrl();
     } 
     this.isStateStringCorrect = this.$route.query.state == this.stateString;
+    this.token = this.$route.query.token;
   },
   methods: {
     initializeStore: function() {
@@ -264,7 +284,7 @@ export default {
       axios.get(localEventsURL)
         .then((response => {
           this.localEvents = response.data;
-          if (this.$route.query.state == this.stateString) { //User has logged in successfully
+          if (this.token != null) { 
             this.getArtistIDs(this.localEvents);
           }
           this.setPerformersArray(response.data);
@@ -279,6 +299,15 @@ export default {
       axios.get(getAuthenticationRequestUrl)
         .then(response => {
           this.spotifyAuthenticationUrl = response.data;
+        })
+    },
+    setNewSpotifyToken: function() {
+      var getSpotifyTokenRequestURl = "http://localhost:8081/token?state=" + this.stateString;
+
+      axios.get(getSpotifyTokenRequestURl)
+        .then(response => {
+          alert(response.data);
+          this.token = response.data;
         })
     },
     getRandomStateString: function() {
