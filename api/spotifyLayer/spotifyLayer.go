@@ -2,6 +2,7 @@ package spotifyLayer
 
 import (
 	"encoding/json"
+	"errors"
 	"flag"
 	"fmt"
 	"net/http"
@@ -13,10 +14,7 @@ import (
 
 var spotifyAuth = spotify.NewAuthenticator(redirectURL, spotify.ScopePlaylistModifyPublic)
 
-//For testing only
-var testClients = make(map[string]spotify.Client)
-
-//For testing only
+var currentClients = make(map[string]spotify.Client)
 
 var applicationPort = "8081"
 var baseURL = "http://localhost:" + applicationPort + "/"
@@ -47,38 +45,11 @@ func SetNewSpotifyClient(w http.ResponseWriter, r *http.Request, state string) (
 
 	newSpotifyClient := spotifyAuth.NewClient(token)
 
-	accessTokenExists, err := redisLayer.Exists(token.AccessToken)
-
-	if err != nil {
-		http.Error(w, "Couldn't check if Redis token exists", http.StatusNotFound)
-		return "", err
+	if _, accessTokenExists := currentClients[token.AccessToken]; accessTokenExists {
+		return token.AccessToken, nil
 	}
 
-	if accessTokenExists {
-		storedToken, err := redisLayer.GetKeyString(token.AccessToken)
-
-		if err != nil {
-			return "", err
-		}
-
-		return storedToken, nil
-	}
-
-	newSpotifyClientJSON, err := json.Marshal(newSpotifyClient)
-
-	if err != nil {
-		return "", err
-	}
-
-	err = redisLayer.SetKeyBytes(token.AccessToken, newSpotifyClientJSON)
-
-	//Testing only
-	testClients[token.AccessToken] = newSpotifyClient
-	//Testing only
-
-	if err != nil {
-		return "", err
-	}
+	currentClients[token.AccessToken] = newSpotifyClient
 
 	return token.AccessToken, nil
 }
@@ -252,22 +223,9 @@ func GetCurrentUser(token string) (string, error) {
 }
 
 func ObtainSpotifyClient(token string) (spotify.Client, error) {
-	var spotifyClient spotify.Client
-
-	redisData, err := redisLayer.GetKeyBytes(token)
-	if err != nil {
-		fmt.Printf("Error obtaining spotify client in Redis: " + err.Error())
-		return spotifyClient, err
+	if spotifyClient, exists := currentClients[token]; exists {
+		return spotifyClient, nil
+	} else {
+		return spotifyClient, errors.New("Spotify client does not exist.")
 	}
-
-	json.Unmarshal(redisData, &spotifyClient)
-	if err != nil {
-		fmt.Printf("Error unmarshalling value for spotify client from Redis: " + err.Error())
-	}
-
-	//Testing only
-	spotifyClient = testClients[token]
-	//Testing only
-
-	return spotifyClient, nil
 }
