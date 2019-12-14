@@ -376,8 +376,14 @@ export default {
             .then((response => {
               this.playlistLoading = false;
               this.playlistStatus = response.status;
+          }).catch((error) => {
+            alert(error);
+            this.forceLogOff();
           }));
-        }));
+        }).catch((error) => {
+                      alert(error);
+          this.forceLogOff();
+      }));
     },
     setPerformersArray: function(localEvents) {
       var tempPerformers = new Array();
@@ -437,6 +443,21 @@ export default {
         this.$refs.carouselRight.startWrapper();
         this.$refs.carouselMain.startWrapper();
       }
+    },
+    forceLogOff: function() {
+      this.localEvents = null;
+      this.localPerformers = null;
+      this.playlistStatus = null;
+      this.spotifyAuthenticationUrl = null;
+      this.topTracks = null;
+      this.artists = null;
+      this.artistImages = null;
+      this.isStateStringCorrect = null;
+      this.playlistLoading = false;
+      this.token = null;
+      this.stateString = null;
+
+      window.location = window.location.href.split("?")[0];
     }
   }
 }

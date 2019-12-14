@@ -132,6 +132,7 @@ func Cities(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
 		w.Write(citiesJSON)
+		return
 	}
 }
 
@@ -146,6 +147,7 @@ func Genres(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
 		w.Write(genresJSON)
+		return
 	}
 }
 
@@ -187,6 +189,7 @@ func LocalEvents(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
 		w.Write(localSeatGeekEventsJSON)
+		return
 	}
 }
 
@@ -206,6 +209,7 @@ func User(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte(fmt.Sprintf("Error obtaining current user")))
+		return
 	}
 
 	currentUserJSON, err := json.Marshal(currentUser)
@@ -214,10 +218,12 @@ func User(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte(fmt.Sprintf("Error marshaling spotify user %s", currentUser)))
+		return
 	} else {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
 		w.Write(currentUserJSON)
+		return
 	}
 }
 
@@ -242,6 +248,7 @@ func ArtistIDs(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte("Error decoding local seatgeek events: " + err.Error()))
+		return
 	}
 
 	var artistChannels []chan ArtistIDResponse
@@ -274,6 +281,7 @@ func ArtistIDs(w http.ResponseWriter, r *http.Request) {
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusInternalServerError)
 			w.Write([]byte("Error getting artist ID for spotify artist: " + err.Error() + "\n"))
+			return
 		} else {
 			var newArtist spotifyLayer.SpotifyArtistImage
 			newArtist.Id = response.ID
@@ -288,10 +296,12 @@ func ArtistIDs(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte(fmt.Sprintf("Error marshaling spotify artist IDs")))
+		return
 	} else {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
 		w.Write(artistsJSON)
+		return
 	}
 }
 
@@ -314,6 +324,7 @@ func TopTracks(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte("Error decoding Spotify Artist IDs: " + err.Error() + "\n"))
+		return
 	}
 
 	var topTrackChannels []chan TopTrackResponse
@@ -345,6 +356,7 @@ func TopTracks(w http.ResponseWriter, r *http.Request) {
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusInternalServerError)
 			w.Write([]byte("Error getting top track for spotify artist: " + err.Error()))
+			return
 		} else {
 			if response.ArtistExists {
 				topTracks = append(topTracks, response.Track)
@@ -357,10 +369,12 @@ func TopTracks(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte(fmt.Sprintf("Error marshaling spotify top tracks")))
+		return
 	} else {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
 		w.Write(topTracksJSON)
+		return
 	}
 }
 
@@ -455,6 +469,7 @@ func BuildPlaylist(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("Playlist generated."))
+		return
 	}
 }
 
