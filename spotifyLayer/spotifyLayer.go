@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"otherside/api/redisLayer"
+	"time"
 
 	"github.com/zmb3/spotify"
 )
@@ -15,6 +16,7 @@ import (
 var spotifyAuth = spotify.NewAuthenticator(redirectURL, spotify.ScopePlaylistModifyPublic)
 
 var currentClients = make(map[string]spotify.Client)
+var clientTimers = make(map[string]*time.Timer)
 
 var applicationPort = "8081"
 var baseURL = "http://localhost:" + applicationPort + "/"
@@ -50,8 +52,26 @@ func SetNewSpotifyClient(w http.ResponseWriter, r *http.Request, state string) (
 	}
 
 	currentClients[token.AccessToken] = newSpotifyClient
+	CreateNewClientTimer(token.AccessToken)
 
 	return token.AccessToken, nil
+}
+
+func CreateNewClientTimer(token string) {
+	newClientTimer := time.NewTimer(1 * time.Minute)
+	clientTimers[token] = newClientTimer
+
+	go func() {
+		<-newClientTimer.C
+		delete(currentClients, token)
+		delete(clientTimers, token)
+		fmt.Printf("Client data for token %s deleted\n", token)
+	}()
+}
+
+func ResetClientTimer(token string) {
+	clientTimer := clientTimers[token]
+	clientTimer.Reset(1 * time.Minute)
 }
 
 func GetTopSpotifyArtistTrack(token string, artistID spotify.ID) (spotify.FullTrack, error) {
@@ -81,7 +101,7 @@ func GetTopSpotifyArtistTrack(token string, artistID spotify.ID) (spotify.FullTr
 
 	spotifyClient, err := ObtainSpotifyClient(token)
 	if err != nil {
-		fmt.Printf("Error obtaining spotify client: " + err.Error())
+		fmt.Printf("GetTopSpotifyArtistTrack: " + err.Error())
 		return cachedTopTrack, err
 	}
 
@@ -109,7 +129,7 @@ func GeneratePlayList(token string, playlistName string, description string) (sp
 
 	spotifyClient, err := ObtainSpotifyClient(token)
 	if err != nil {
-		fmt.Printf("Error obtaining spotify client: " + err.Error())
+		fmt.Printf("GeneratePlayList: " + err.Error())
 		return "", err
 	}
 
@@ -135,7 +155,7 @@ func GeneratePlayList(token string, playlistName string, description string) (sp
 func AddTracksToPlaylist(token string, playlistID spotify.ID, tracksToAdd []spotify.FullTrack) error {
 	spotifyClient, err := ObtainSpotifyClient(token)
 	if err != nil {
-		fmt.Printf("Error obtaining spotify client: " + err.Error())
+		fmt.Printf("AddTracksToPlaylist: " + err.Error())
 		return err
 	}
 
@@ -177,7 +197,7 @@ func SearchAndFindSpotifyArtistID(token string, artistName string) (SpotifyArtis
 
 	spotifyClient, err := ObtainSpotifyClient(token)
 	if err != nil {
-		fmt.Printf("Error obtaining spotify client: " + err.Error())
+		fmt.Printf("SearchAndFindSpotifyArtistID: " + err.Error())
 		return spotifyArtistImage, err
 	}
 
@@ -209,7 +229,7 @@ func GetCurrentUser(token string) (string, error) {
 
 	spotifyClient, err := ObtainSpotifyClient(token)
 	if err != nil {
-		fmt.Printf("Error obtaining spotify client: " + err.Error())
+		fmt.Printf("GetCurrentUser: " + err.Error())
 		return "", err
 	}
 
@@ -224,6 +244,11 @@ func GetCurrentUser(token string) (string, error) {
 
 func ObtainSpotifyClient(token string) (spotify.Client, error) {
 	if spotifyClient, exists := currentClients[token]; exists {
+		if _, exists := clientTimers[token]; exists {
+			ResetClientTimer(token)
+		} else {
+			fmt.Printf("Couldn't reset timer for token %s\n", token)
+		}
 		return spotifyClient, nil
 	} else {
 		return spotifyClient, errors.New("Spotify client does not exist.")
