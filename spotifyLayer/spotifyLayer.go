@@ -77,6 +77,12 @@ func ResetClientTimer(token string) {
 func GetTopSpotifyArtistTrack(token string, artistID spotify.ID) (spotify.FullTrack, error) {
 	var cachedTopTrack spotify.FullTrack
 
+	spotifyClient, err := ObtainSpotifyClient(token)
+	if err != nil {
+		fmt.Printf("GetTopSpotifyArtistTrack: " + err.Error())
+		return cachedTopTrack, err
+	}
+
 	topTrackAlreadyCached, err := redisLayer.Exists(string(artistID))
 	if err != nil {
 		fmt.Printf("Couldn't check if artistID %s exists in Redis: "+err.Error(), string(artistID))
@@ -97,12 +103,6 @@ func GetTopSpotifyArtistTrack(token string, artistID spotify.ID) (spotify.FullTr
 		}
 
 		return cachedTopTrack, nil
-	}
-
-	spotifyClient, err := ObtainSpotifyClient(token)
-	if err != nil {
-		fmt.Printf("GetTopSpotifyArtistTrack: " + err.Error())
-		return cachedTopTrack, err
 	}
 
 	topTracks, err := spotifyClient.GetArtistsTopTracks(artistID, "US")

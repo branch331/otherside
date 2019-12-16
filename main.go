@@ -355,7 +355,7 @@ func TopTracks(w http.ResponseWriter, r *http.Request) {
 		if response.err != nil {
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte("Error getting top track for spotify artist: " + err.Error()))
+			w.Write([]byte("Error getting top track for spotify artist"))
 			return
 		} else {
 			if response.ArtistExists {
