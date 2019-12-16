@@ -372,6 +372,7 @@ export default {
       axios.post(topTracksURL, JSON.stringify(artistIDs), auth)
         .then((response => {
           this.topTracks = response.data;
+          alert(response.status);
           axios.post(buildPlaylistURL, JSON.stringify(response.data), auth)
             .then((response => {
               this.playlistLoading = false;
