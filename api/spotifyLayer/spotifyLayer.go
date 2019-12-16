@@ -58,7 +58,7 @@ func SetNewSpotifyClient(w http.ResponseWriter, r *http.Request, state string) (
 }
 
 func CreateNewClientTimer(token string) {
-	newClientTimer := time.NewTimer(1 * time.Minute)
+	newClientTimer := time.NewTimer(5 * time.Minute)
 	clientTimers[token] = newClientTimer
 
 	go func() {
@@ -71,7 +71,7 @@ func CreateNewClientTimer(token string) {
 
 func ResetClientTimer(token string) {
 	clientTimer := clientTimers[token]
-	clientTimer.Reset(1 * time.Minute)
+	clientTimer.Reset(5 * time.Minute)
 }
 
 func GetTopSpotifyArtistTrack(token string, artistID spotify.ID) (spotify.FullTrack, error) {
@@ -173,6 +173,12 @@ func AddTracksToPlaylist(token string, playlistID spotify.ID, tracksToAdd []spot
 func SearchAndFindSpotifyArtistID(token string, artistName string) (SpotifyArtistImage, error) {
 	var spotifyArtistImage SpotifyArtistImage
 
+	spotifyClient, err := ObtainSpotifyClient(token)
+	if err != nil {
+		fmt.Printf("SearchAndFindSpotifyArtistID: " + err.Error())
+		return spotifyArtistImage, err
+	}
+
 	artistNameAlreadyCached, err := redisLayer.Exists(artistName)
 	if err != nil {
 		fmt.Print("Couldn't access artist name %s from Redis cache: "+err.Error(), artistName)
@@ -193,12 +199,6 @@ func SearchAndFindSpotifyArtistID(token string, artistName string) (SpotifyArtis
 		}
 
 		return spotifyArtistImage, nil
-	}
-
-	spotifyClient, err := ObtainSpotifyClient(token)
-	if err != nil {
-		fmt.Printf("SearchAndFindSpotifyArtistID: " + err.Error())
-		return spotifyArtistImage, err
 	}
 
 	searchResults, err := spotifyClient.Search(artistName, spotify.SearchTypeArtist)

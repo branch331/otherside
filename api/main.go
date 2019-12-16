@@ -280,7 +280,7 @@ func ArtistIDs(w http.ResponseWriter, r *http.Request) {
 		if response.err != nil {
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte("Error getting artist ID for spotify artist: " + err.Error() + "\n"))
+			w.Write([]byte("Error getting artist ID for spotify artist"))
 			return
 		} else {
 			var newArtist spotifyLayer.SpotifyArtistImage

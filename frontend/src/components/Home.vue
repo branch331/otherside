@@ -306,7 +306,6 @@ export default {
 
       axios.get(getSpotifyTokenRequestURl)
         .then(response => {
-          alert(response.data);
           this.token = response.data;
         })
     },
@@ -345,7 +344,9 @@ export default {
               this.setCarouselStartSlides();
             });
           });
-        }));
+        })).catch(() => {
+          this.forceLogOff();
+        });
     },
     buildPlaylist: function (name, desc) {
       var topTracksURL = "http://localhost:8081/toptracks";
@@ -372,19 +373,18 @@ export default {
       axios.post(topTracksURL, JSON.stringify(artistIDs), auth)
         .then((response => {
           this.topTracks = response.data;
-          alert(response.status);
+
           axios.post(buildPlaylistURL, JSON.stringify(response.data), auth)
             .then((response => {
               this.playlistLoading = false;
               this.playlistStatus = response.status;
-          }).catch((error) => {
-            alert(error);
+            })).catch(() => {
+              this.forceLogOff();
+            })
+          })).catch(() => {
             this.forceLogOff();
-          }));
-        }).catch((error) => {
-                      alert(error);
-          this.forceLogOff();
-      }));
+          }
+        );
     },
     setPerformersArray: function(localEvents) {
       var tempPerformers = new Array();
