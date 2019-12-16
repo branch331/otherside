@@ -146,7 +146,8 @@ export default {
       artists: null,
       artistImages: null,
       isStateStringCorrect: null,
-      playlistLoading: false
+      playlistLoading: false,
+      apiAddress: null
     }
   },
   computed: {
@@ -226,6 +227,9 @@ export default {
     }
   },
   mounted () {
+    //Assumes the API is hosted on the same machine
+    this.apiAddress = this.obtainApiAddress();
+
     this.initializeStore();
 
     if (this.selectedCities.length != 0 && this.selectedGenres.length != 0) {
@@ -255,7 +259,7 @@ export default {
     getAvailableCities: function() {
       this.availableCities = new Array();
 
-      var citiesURL = "http://localhost:8081/cities";
+      var citiesURL = `${this.apiAddress}:8081/cities`;
 
       axios.get(citiesURL)
         .then((response => {
@@ -265,7 +269,7 @@ export default {
     getAvailableGenres: function() {
       this.availableGenres = new Array();
 
-      var genresURL = "http://localhost:8081/genres";
+      var genresURL = `${this.apiAddress}:8081/genres`;
 
       axios.get(genresURL)
         .then((response => {
@@ -276,7 +280,7 @@ export default {
       var cityString = this.arrayToQueryString(cities);
       var genreString = this.arrayToQueryString(genres);
 
-      var localEventsURL = "http://localhost:8081/localevents?cities=" +
+      var localEventsURL = `${this.apiAddress}:8081/localevents?cities=` +
       cityString +
       "&genres=" +
       genreString;
@@ -293,7 +297,7 @@ export default {
     setNewSpotifyAuthenticationUrl: function() {
       this.stateString = this.getRandomStateString()
 
-      var getAuthenticationRequestUrl = "http://localhost:8081/authenticate?state="
+      var getAuthenticationRequestUrl = `${this.apiAddress}:8081/authenticate?state=`
       +  this.stateString;
 
       axios.get(getAuthenticationRequestUrl)
@@ -302,7 +306,7 @@ export default {
         })
     },
     setNewSpotifyToken: function() {
-      var getSpotifyTokenRequestURl = "http://localhost:8081/token?state=" + this.stateString;
+      var getSpotifyTokenRequestURl = `${this.apiAddress}:8081/token?state=` + this.stateString;
 
       axios.get(getSpotifyTokenRequestURl)
         .then(response => {
@@ -326,7 +330,7 @@ export default {
       return queryString;
     },
     getArtistIDs: function(events) {
-      var artistIDsURL = "http://localhost:8081/artistids";
+      var artistIDsURL = `${this.apiAddress}:8081/artistids`;
 
       const auth = {
         headers: {
@@ -349,8 +353,8 @@ export default {
         });
     },
     buildPlaylist: function (name, desc) {
-      var topTracksURL = "http://localhost:8081/toptracks";
-      var buildPlaylistURL = "http://localhost:8081/buildplaylist?name=" +
+      var topTracksURL = `${this.apiAddress}:8081/toptracks`;
+      var buildPlaylistURL = `${this.apiAddress}:8081/buildplaylist?name=` +
         name +
         "&desc=" +
         desc;
@@ -459,6 +463,11 @@ export default {
       this.stateString = null;
 
       window.location = window.location.href.split("?")[0];
+    },
+    obtainApiAddress: function() {
+      var hostname = window.location.host;
+      var hostnameWithoutPort = hostname.substring(0, hostname.indexOf(":"));
+      return window.location.protocol + "//" + hostnameWithoutPort;
     }
   }
 }
