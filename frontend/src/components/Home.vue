@@ -1,40 +1,27 @@
 <template>
   <div class="home">
-    <div class="mainBody">
+    <AppHeader :stateString="stateString">
+    </AppHeader>
 
+    <div class="mainBody">
     <div class="row">
       <div class="leftsidebar col-md-4">
-        <div class="selections">
-          <h5>1. Pick some cities</h5>
-          <ul v-if="selectedCities">
-            <li v-for="city in selectedCities" v-bind:key="city" v-on:click="transferArrayValue(selectedCities, availableCities, city)">
-              {{city}} <span class="selectedX">X</span>
-            </li>
-          </ul>
+            {{selectedCities}}
 
-          <h5>Available Cities</h5>
-          <ul v-if="availableCities">
-            <li v-for="city in availableCities" v-bind:key="city" v-on:click="transferArrayValue(availableCities, selectedCities, city)">
-              {{city}} <span class="selectedX">X</span>
-            </li>
-          </ul>
-        </div>
+        <Selector 
+          selectorName="cities"
+          maxItems="6"
+          v-bind:selectedItems="selectedCities"
+          v-bind:availableItems="availableCities">
+        </Selector>
 
-        <div class="selections">
-          <h5>2. Pick some genres</h5>
-          <ul v-if="selectedGenres">
-            <li v-for="genre in selectedGenres" v-bind:key="genre" v-on:click="transferArrayValue(selectedGenres, availableGenres, genre)">
-              {{genre}} <span class="selectedX">X</span>
-            </li>
-          </ul>
-
-          <h5>Available Genres</h5>
-          <ul v-if="availableGenres">
-            <li v-for="genre in availableGenres" v-bind:key="genre" v-on:click="transferArrayValue(availableGenres, selectedGenres, genre)">
-              {{genre}} <span class="selectedX">X</span>
-            </li>
-          </ul>
-        </div>
+    {{selectedGenres}}
+        <Selector 
+          selectorName="genres"
+          maxItems="10"
+          v-bind:selectedItems="selectedGenres"
+          v-bind:availableItems="availableGenres">
+        </Selector>
       </div>
 
       <div class="playlistcontent col-md-6">
@@ -42,37 +29,23 @@
         <div class="eventsHolder">
           <h2>Events Data:</h2>
 
-            <!--
-              <template v-for="event in localEvents">
-                  <b-carousel-slide class="performerSlide" v-for="(performer, i) in event.Performers" v-bind:key="`${i}-${performer}`" img-src="https://picsum.photos/1024/1024/?image=54">
-                    <p>{{performer}}</p>
-                  </b-carousel-slide>
-              </template>
-              -->
-
-          <div v-if="localPerformers"> 
+          <div v-if="artistImages"> 
             <PerformerCarousel 
               carouselId="performerCarouselLeft"
               ref="carouselLeft"
-              v-bind:performers="localPerformers">
+              v-bind:artistImages="artistImages">
             </PerformerCarousel>
 
             <PerformerCarousel 
               carouselId="performerCarouselRight"
               ref="carouselRight"
-              v-bind:performers="localPerformers">
-                <b-carousel-slide class="performerSlide" v-for="(performer, i) in localPerformers" v-bind:key="`${i}-${performer}-left`" img-src="https://picsum.photos/1024/1024/?image=54">
-                  <p>{{performer}}</p>
-                </b-carousel-slide>
+              v-bind:artistImages="artistImages">
             </PerformerCarousel>
 
             <PerformerCarousel 
               carouselId="performerCarouselMain"
               ref="carouselMain"
-              v-bind:performers="localPerformers">
-                <b-carousel-slide class="performerSlide" v-for="(performer, i) in localPerformers" v-bind:key="`${i}-${performer}-left`" img-src="https://picsum.photos/1024/1024/?image=54">
-                  <p>{{performer}}</p>
-                </b-carousel-slide>
+              v-bind:artistImages="artistImages">
             </PerformerCarousel>
           </div>
         </div>
@@ -82,11 +55,22 @@
         </div>
         
         <div class="btnHolder" v-if="isStateStringCorrect">
-          <button class="btn" v-on:click="buildPlaylist('Spooky Title', 'Spooooky Description!')">Build Playlist</button>
+          <button class="btn" :disabled="playlistLoading" v-on:click="buildPlaylist('Spooky Title', 'Spooooky Description!')">Build Playlist</button>
         </div>
 
-        <div v-if="topTracks">
-          {{topTracks.length}}
+        <div v-if="token">
+          {{token}}
+        </div>
+        <div v-if="localEvents">
+        {{localEvents}}
+        </div>
+
+        <div class="playlistResult" v-if="playlistLoading === true">
+          <h4>Building playlist...</h4>
+        </div>
+
+        <div class="playlistResult" v-if="playlistStatus === 200">
+          <h4>{{topTracks.length}} tracks created!</h4>
         </div>
 
       </div>
@@ -101,7 +85,9 @@
 import axios from 'axios';
 import Vue from "vue";
 import Vuex from "vuex";
+import AppHeader from './AppHeader.vue';
 import PerformerCarousel from './PerformerCarousel.vue';
+import Selector from './Selector.vue';
 import createPersistedState from "vuex-persistedstate";
 
 Vue.use(Vuex);
@@ -111,7 +97,8 @@ const state = {
   selectedGenres: null,
   availableCities: null,
   availableGenres: null,
-  stateString: null
+  stateString: null,
+  token: null
 };
 
 const mutations = {
@@ -129,6 +116,9 @@ const mutations = {
   },
   UPDATE_STATE_STRING(state, newValue) {
     state.stateString = newValue;
+  },
+  UPDATE_TOKEN(state, newValue) {
+    state.token = newValue;
   }
 };
 
@@ -142,7 +132,9 @@ export default {
   name: 'home',
   store,
   components: {
-    PerformerCarousel
+    AppHeader,
+    PerformerCarousel,
+    Selector
   },
   data () {
     return {
@@ -151,8 +143,11 @@ export default {
       playlistStatus: null,
       spotifyAuthenticationUrl: null,
       topTracks: null,
-      artistIDs: null,
-      isStateStringCorrect: null
+      artists: null,
+      artistImages: null,
+      isStateStringCorrect: null,
+      playlistLoading: false,
+      apiAddress: null
     }
   },
   computed: {
@@ -195,11 +190,48 @@ export default {
       set: function(newValue) {
         store.commit("UPDATE_STATE_STRING", newValue);
       }
+    },
+    token: {
+      get: function() {
+        return store.state.token;
+      },
+      set: function(newValue) {
+        store.commit("UPDATE_TOKEN", newValue);
+      }
+    }
+  },
+  watch: {
+    'selectedCities': function() {
+      if (this.selectedCities.length != 0 && this.selectedGenres.length != 0) {
+        store.commit("UPDATE_SELECTED_CITIES", this.selectedCities);
+        store.commit("UPDATE_AVAILABLE_CITIES", this.availableCities);
+
+        this.getLocalEvents(this.selectedCities, this.selectedGenres);
+      } else {
+        this.localEvents = null;
+        this.localPerformers = null;
+        this.artistImages = null;
+      }
+    },
+    'selectedGenres': function() {
+      if (this.selectedCities.length != 0 && this.selectedGenres.length != 0) {
+        store.commit("UPDATE_SELECTED_GENRES", this.selectedGenres);
+        store.commit("UPDATE_AVAILABLE_GENRES", this.availableGenres);
+
+        this.getLocalEvents(this.selectedCities, this.selectedGenres);
+      } else {
+        this.localEvents = null;
+        this.localPerformers = null;
+        this.artistImages = null;
+      }
     }
   },
   mounted () {
+    //Assumes the API is hosted on the same machine
+    this.apiAddress = this.obtainApiAddress();
+
     this.initializeStore();
-    
+
     if (this.selectedCities.length != 0 && this.selectedGenres.length != 0) {
       this.getLocalEvents(this.selectedCities, this.selectedGenres);
     } 
@@ -207,6 +239,7 @@ export default {
       this.setNewSpotifyAuthenticationUrl();
     } 
     this.isStateStringCorrect = this.$route.query.state == this.stateString;
+    this.token = this.$route.query.token;
   },
   methods: {
     initializeStore: function() {
@@ -223,49 +256,10 @@ export default {
         this.getAvailableGenres();
       }
     },
-    transferArrayValue: function(sourceArray, targetArray, value) {
-      var index = sourceArray.indexOf(value);
-      if (index > -1) {
-
-        if (!(targetArray == this.selectedCities && targetArray.length == 6) && 
-        !(targetArray == this.selectedGenres && targetArray.length == 10)) {
-          if (sourceArray == this.selectedCities) {
-            sourceArray.splice(index, 1);
-            targetArray.push(value);
-            this.selectedCities = sourceArray;
-            this.availableCities = targetArray;
-          } 
-          else if (sourceArray == this.availableCities) {
-            sourceArray.splice(index, 1);
-            targetArray.push(value);
-            this.availableCities = sourceArray;
-            this.selectedCities = targetArray;
-          }
-          else if (sourceArray == this.selectedGenres) {
-            sourceArray.splice(index, 1);
-            targetArray.push(value);
-            this.selectedGenres = sourceArray;
-            this.availableGenres = targetArray;
-          }
-          else if (sourceArray == this.availableGenres) {
-            sourceArray.splice(index, 1);
-            targetArray.push(value);
-            this.availableGenres = sourceArray;
-            this.selectedGenres = targetArray;
-          }
-        }
-      }
-      if (this.selectedCities.length != 0 && this.selectedGenres.length != 0) {
-        this.getLocalEvents(this.selectedCities, this.selectedGenres);
-      } else {
-        this.localEvents = null;
-        this.localPerformers = null;
-      }
-    },
     getAvailableCities: function() {
       this.availableCities = new Array();
 
-      var citiesURL = "http://localhost:8081/cities";
+      var citiesURL = `${this.apiAddress}:8081/cities`;
 
       axios.get(citiesURL)
         .then((response => {
@@ -275,7 +269,7 @@ export default {
     getAvailableGenres: function() {
       this.availableGenres = new Array();
 
-      var genresURL = "http://localhost:8081/genres";
+      var genresURL = `${this.apiAddress}:8081/genres`;
 
       axios.get(genresURL)
         .then((response => {
@@ -286,7 +280,7 @@ export default {
       var cityString = this.arrayToQueryString(cities);
       var genreString = this.arrayToQueryString(genres);
 
-      var localEventsURL = "http://localhost:8081/localevents?cities=" +
+      var localEventsURL = `${this.apiAddress}:8081/localevents?cities=` +
       cityString +
       "&genres=" +
       genreString;
@@ -294,26 +288,29 @@ export default {
       axios.get(localEventsURL)
         .then((response => {
           this.localEvents = response.data;
-          if (this.$route.query.state == this.stateString) { //User has logged in successfully
+          if (this.token != null) { 
             this.getArtistIDs(this.localEvents);
           }
           this.setPerformersArray(response.data);
-          this.$nextTick(() => {
-            this.$nextTick(() => {
-              this.setCarouselStartSlides();
-            });
-          });
         }));
     },
     setNewSpotifyAuthenticationUrl: function() {
       this.stateString = this.getRandomStateString()
 
-      var getAuthenticationRequestUrl = "http://localhost:8081/authenticate?state="
+      var getAuthenticationRequestUrl = `${this.apiAddress}:8081/authenticate?state=`
       +  this.stateString;
 
       axios.get(getAuthenticationRequestUrl)
         .then(response => {
           this.spotifyAuthenticationUrl = response.data;
+        })
+    },
+    setNewSpotifyToken: function() {
+      var getSpotifyTokenRequestURl = `${this.apiAddress}:8081/token?state=` + this.stateString;
+
+      axios.get(getSpotifyTokenRequestURl)
+        .then(response => {
+          this.token = response.data;
         })
     },
     getRandomStateString: function() {
@@ -333,28 +330,65 @@ export default {
       return queryString;
     },
     getArtistIDs: function(events) {
-      var artistIDsURL = "http://localhost:8081/artistids";
+      var artistIDsURL = `${this.apiAddress}:8081/artistids`;
 
-      axios.post(artistIDsURL, JSON.stringify(events))
+      const auth = {
+        headers: {
+          'Authorization': `Bearer ${this.token}`
+        }
+      }
+
+      axios.post(artistIDsURL, JSON.stringify(events), auth)
         .then((response => {
-          this.artistIDs = response.data;
-        }));
+          this.artists = response.data;
+          this.setArtistImagesArray(this.artists);
+
+          this.$nextTick(() => {
+            this.$nextTick(() => {
+              this.setCarouselStartSlides();
+            });
+          });
+        })).catch(() => {
+          this.forceLogOff();
+        });
     },
     buildPlaylist: function (name, desc) {
-      var topTracksURL = "http://localhost:8081/toptracks";
-      var buildPlaylistURL = "http://localhost:8081/buildplaylist?name=" +
+      var topTracksURL = `${this.apiAddress}:8081/toptracks`;
+      var buildPlaylistURL = `${this.apiAddress}:8081/buildplaylist?name=` +
         name +
         "&desc=" +
         desc;
 
-      axios.post(topTracksURL, JSON.stringify(this.artistIDs))
+      var artistIDs = new Array();
+
+      this.artists.forEach(function(value) {
+        artistIDs.push(value.Id);
+      });
+
+      this.playlistLoading = true;
+      this.playlistStatus = null;
+
+      const auth = {
+        headers: {
+          'Authorization': `Bearer ${this.token}`
+        }
+      }
+
+      axios.post(topTracksURL, JSON.stringify(artistIDs), auth)
         .then((response => {
           this.topTracks = response.data;
-          axios.post(buildPlaylistURL, JSON.stringify(response.data))
+
+          axios.post(buildPlaylistURL, JSON.stringify(response.data), auth)
             .then((response => {
+              this.playlistLoading = false;
               this.playlistStatus = response.status;
-          }));
-        }));
+            })).catch(() => {
+              this.forceLogOff();
+            })
+          })).catch(() => {
+            this.forceLogOff();
+          }
+        );
     },
     setPerformersArray: function(localEvents) {
       var tempPerformers = new Array();
@@ -371,11 +405,24 @@ export default {
         this.localPerformers = tempPerformers;
       }
     },
+    setArtistImagesArray: function(artists) {
+      var tempArtistImages = new Array();
+
+      if (artists != null) {
+        artists.forEach(function(artist) {
+          if (artist.Name != "" && artist.ImageURL != "") {
+            tempArtistImages.push({"Name": artist.Name, "ImageURL": artist.ImageURL});
+          }
+        }); 
+
+        this.artistImages = tempArtistImages;
+      }
+    },
     setCarouselStartSlides: function() {
       var numberOfPerformers = -1; 
       
-      if (this.localPerformers != null) {
-        numberOfPerformers = this.localPerformers.length;
+      if (this.artistImages != null) {
+        numberOfPerformers = this.artistImages.length;
       }
 
       if (numberOfPerformers > 0) {
@@ -401,6 +448,26 @@ export default {
         this.$refs.carouselRight.startWrapper();
         this.$refs.carouselMain.startWrapper();
       }
+    },
+    forceLogOff: function() {
+      this.localEvents = null;
+      this.localPerformers = null;
+      this.playlistStatus = null;
+      this.spotifyAuthenticationUrl = null;
+      this.topTracks = null;
+      this.artists = null;
+      this.artistImages = null;
+      this.isStateStringCorrect = null;
+      this.playlistLoading = false;
+      this.token = null;
+      this.stateString = null;
+
+      window.location = window.location.href.split("?")[0];
+    },
+    obtainApiAddress: function() {
+      var hostname = window.location.host;
+      var hostnameWithoutPort = hostname.substring(0, hostname.indexOf(":"));
+      return window.location.protocol + "//" + hostnameWithoutPort;
     }
   }
 }

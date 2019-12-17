@@ -24,8 +24,10 @@ type TopTrackResponse struct {
 }
 
 type ArtistIDResponse struct {
-	ID  spotify.ID
-	err error
+	ID       spotify.ID
+	Name     string
+	ImageURL string
+	err      error
 }
 
 var applicationPort = "8081"
@@ -43,9 +45,10 @@ func main() {
 	router.HandleFunc("/authenticate", Authenticate)
 	router.HandleFunc("/callback", Callback)
 	router.HandleFunc("/localevents", LocalEvents)
-	router.HandleFunc("/toptracks", TopTracks).Methods("POST")
-	router.HandleFunc("/artistids", ArtistIDs).Methods("POST")
-	router.HandleFunc("/buildplaylist", BuildPlaylist).Methods("POST")
+	router.HandleFunc("/user", User)
+	router.HandleFunc("/toptracks", TopTracks).Methods("POST", "OPTIONS")
+	router.HandleFunc("/artistids", ArtistIDs).Methods("POST", "OPTIONS")
+	router.HandleFunc("/buildplaylist", BuildPlaylist).Methods("POST", "OPTIONS")
 
 	log.Fatal(http.ListenAndServe(":"+applicationPort, router))
 }
@@ -129,6 +132,7 @@ func Cities(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
 		w.Write(citiesJSON)
+		return
 	}
 }
 
@@ -143,6 +147,7 @@ func Genres(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
 		w.Write(genresJSON)
+		return
 	}
 }
 
@@ -151,13 +156,19 @@ func LocalEvents(w http.ResponseWriter, r *http.Request) {
 	enableCors(&w)
 
 	cities, ok := r.URL.Query()["cities"]
-	if !ok || len(cities[0]) < 1 {
-		fmt.Printf("cities parameter missing from localevents request.")
+	if !ok || len(cities) < 1 {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(fmt.Sprintf("Cities array parameter missing from request.")))
+		return
 	}
 
 	genres, ok := r.URL.Query()["genres"]
-	if !ok || len(genres[0]) < 1 {
-		fmt.Printf("genres parameter missing from localevents request.")
+	if !ok || len(genres) < 1 {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(fmt.Sprintf("Genres array parameter missing from request.")))
+		return
 	}
 
 	citiesArray := QueryStringToArray(cities[0])
@@ -178,6 +189,7 @@ func LocalEvents(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
 		w.Write(localSeatGeekEventsJSON)
+		return
 	}
 }
 
@@ -186,19 +198,57 @@ func QueryStringToArray(queryString string) []string {
 	return testsArray
 }
 
+//GET
+func User(w http.ResponseWriter, r *http.Request) {
+	enableCors(&w)
+
+	token := ExtractTokenFromHeader(r)
+
+	currentUser, err := spotifyLayer.GetCurrentUser(token)
+	if err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(fmt.Sprintf("Error obtaining current user")))
+		return
+	}
+
+	currentUserJSON, err := json.Marshal(currentUser)
+
+	if err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(fmt.Sprintf("Error marshaling spotify user %s", currentUser)))
+		return
+	} else {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		w.Write(currentUserJSON)
+		return
+	}
+}
+
 //POST
 func ArtistIDs(w http.ResponseWriter, r *http.Request) {
 	enableCors(&w)
+
+	if r.Method == "OPTIONS" {
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+
 	time.Sleep(200 * time.Millisecond)
 
+	token := ExtractTokenFromHeader(r)
+
 	var localSeatGeekEvents []seatgeekLayer.SeatGeekEvent
-	var artistIDs []spotify.ID
+	var artists []spotifyLayer.SpotifyArtistImage
 
 	err := json.NewDecoder(r.Body).Decode(&localSeatGeekEvents)
 	if err != nil {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte("Error decoding local seatgeek events: " + err.Error()))
+		return
 	}
 
 	var artistChannels []chan ArtistIDResponse
@@ -208,7 +258,7 @@ func ArtistIDs(w http.ResponseWriter, r *http.Request) {
 		for _, performer := range event.Performers {
 			artistChan := make(chan ArtistIDResponse)
 			artistChannels = append(artistChannels, artistChan)
-			go GetArtistID(performer, artistChan)
+			go GetArtistID(token, performer, artistChan)
 		}
 	}
 	cases := make([]reflect.SelectCase, len(artistChannels))
@@ -230,27 +280,40 @@ func ArtistIDs(w http.ResponseWriter, r *http.Request) {
 		if response.err != nil {
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte("Error getting artist ID for spotify artist: " + err.Error() + "\n"))
+			w.Write([]byte("Error getting artist ID for spotify artist"))
+			return
 		} else {
-			artistIDs = append(artistIDs, response.ID)
+			var newArtist spotifyLayer.SpotifyArtistImage
+			newArtist.Id = response.ID
+			newArtist.Name = response.Name
+			newArtist.ImageURL = response.ImageURL
+			artists = append(artists, newArtist)
 		}
 	}
 	fmt.Println("[Time benchmark] Artist IDs " + time.Since(t4).String())
-	artistIDJSON, err := json.Marshal(artistIDs)
+	artistsJSON, err := json.Marshal(artists)
 	if err != nil {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte(fmt.Sprintf("Error marshaling spotify artist IDs")))
+		return
 	} else {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
-		w.Write(artistIDJSON)
+		w.Write(artistsJSON)
+		return
 	}
 }
 
 //POST
 func TopTracks(w http.ResponseWriter, r *http.Request) {
 	enableCors(&w)
+
+	if r.Method == "OPTIONS" {
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+
 	time.Sleep(200 * time.Millisecond)
 
 	var artistIDs []spotify.ID
@@ -261,15 +324,17 @@ func TopTracks(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte("Error decoding Spotify Artist IDs: " + err.Error() + "\n"))
+		return
 	}
 
 	var topTrackChannels []chan TopTrackResponse
+	token := ExtractTokenFromHeader(r)
 
 	t4 := time.Now()
 	for _, ID := range artistIDs {
 		topTrackChan := make(chan TopTrackResponse)
 		topTrackChannels = append(topTrackChannels, topTrackChan)
-		go GetArtistTopTrack(ID, topTrackChan)
+		go GetArtistTopTrack(token, ID, topTrackChan)
 	}
 	cases := make([]reflect.SelectCase, len(topTrackChannels))
 
@@ -290,7 +355,8 @@ func TopTracks(w http.ResponseWriter, r *http.Request) {
 		if response.err != nil {
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte("Error getting top track for spotify artist: " + err.Error()))
+			w.Write([]byte("Error getting top track for spotify artist"))
+			return
 		} else {
 			if response.ArtistExists {
 				topTracks = append(topTracks, response.Track)
@@ -303,34 +369,38 @@ func TopTracks(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte(fmt.Sprintf("Error marshaling spotify top tracks")))
+		return
 	} else {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
 		w.Write(topTracksJSON)
+		return
 	}
 }
 
-func GetArtistID(performer string, artistChan chan<- ArtistIDResponse) {
+func GetArtistID(token string, performer string, artistChan chan<- ArtistIDResponse) {
 	var response ArtistIDResponse
 
-	artistID, err := spotifyLayer.SearchAndFindSpotifyArtistID(performer)
+	artist, err := spotifyLayer.SearchAndFindSpotifyArtistID(token, performer)
 	if err != nil {
 		response.err = err
 		artistChan <- response
 		close(artistChan)
 	} else {
-		response.ID = artistID
+		response.ID = artist.Id
+		response.Name = artist.Name
+		response.ImageURL = artist.ImageURL
 		response.err = err
 		artistChan <- response
 		close(artistChan)
 	}
 }
 
-func GetArtistTopTrack(artistID spotify.ID, topTrackChan chan<- TopTrackResponse) {
+func GetArtistTopTrack(token string, artistID spotify.ID, topTrackChan chan<- TopTrackResponse) {
 	var response TopTrackResponse
 
 	if artistID != "" {
-		topArtistTrack, err := spotifyLayer.GetTopSpotifyArtistTrack(artistID)
+		topArtistTrack, err := spotifyLayer.GetTopSpotifyArtistTrack(token, artistID)
 		response.Track = topArtistTrack
 		response.ArtistExists = true
 		response.err = err
@@ -348,18 +418,25 @@ func GetArtistTopTrack(artistID spotify.ID, topTrackChan chan<- TopTrackResponse
 func BuildPlaylist(w http.ResponseWriter, r *http.Request) {
 	enableCors(&w)
 
+	if r.Method == "OPTIONS" {
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+
 	playlistName, ok := r.URL.Query()["name"]
-	if !ok || len(playlistName[0]) < 1 {
+	if !ok || len(playlistName) < 1 {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte("Playlist 'name' parameter missing from buildplaylist request."))
+		w.Write([]byte("name parameter missing from request."))
+		return
 	}
 
 	playlistDesc, ok := r.URL.Query()["desc"]
-	if !ok || len(playlistDesc[0]) < 1 {
+	if !ok || len(playlistDesc) < 1 {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte("Playlist 'desc' parameter missing from buildplaylist request."))
+		w.Write([]byte("desc parameter missing from request."))
+		return
 	}
 
 	var topTracks []spotify.FullTrack
@@ -369,55 +446,31 @@ func BuildPlaylist(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte("Error decoding Spotify Top Tracks: " + err.Error()))
+		return
 	}
 
-	playlistID, err := spotifyLayer.GeneratePlayList(playlistName[0], playlistDesc[0])
+	token := ExtractTokenFromHeader(r)
+
+	playlistID, err := spotifyLayer.GeneratePlayList(token, playlistName[0], playlistDesc[0])
 	if err != nil {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte("Error generating playlist: " + err.Error()))
+		return
 	}
 
-	err = spotifyLayer.AddTracksToPlaylist(playlistID, topTracks)
+	err = spotifyLayer.AddTracksToPlaylist(token, playlistID, topTracks)
 	if err != nil {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte("Error adding tracks to playlist: " + err.Error()))
+		return
 	} else {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("Playlist generated."))
+		return
 	}
-}
-
-//POST
-func ConfigureCallbackURL(w http.ResponseWriter, r *http.Request) {
-	enableCors(&w)
-
-	redirectURL, ok := r.URL.Query()["redirectURL"]
-	if !ok || len(redirectURL[0]) < 1 {
-		fmt.Printf("redirectURL parameter missing from configuration request.")
-	}
-}
-
-//GET
-//Callback is called from the Spotify authentication flow, and redirects to <Host>/#/callback
-func Callback(w http.ResponseWriter, r *http.Request) {
-	state, ok := r.URL.Query()["state"]
-	if !ok || len(state[0]) < 1 {
-		fmt.Printf("State parameter missing from callback.")
-	}
-
-	spotifyLayer.SetNewSpotifyClient(w, r, state[0])
-
-	clientOrigin, err := redisLayer.GetKeyString(state[0])
-	if err != nil {
-		fmt.Printf("Error getting state/origin Redis key: " + err.Error())
-	}
-
-	redirectURL := clientOrigin + "/#/?state=" + state[0]
-
-	http.Redirect(w, r, redirectURL, http.StatusSeeOther)
 }
 
 //GET
@@ -448,6 +501,43 @@ func Authenticate(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, authenticationUrl)
 }
 
+//GET
+//Callback is called from the Spotify authentication flow, and redirects to <Host>/#/callback
+func Callback(w http.ResponseWriter, r *http.Request) {
+	state, ok := r.URL.Query()["state"]
+	if !ok || len(state) < 1 {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(fmt.Sprintf("State parameter missing from request.")))
+		return
+	}
+
+	accessToken, err := spotifyLayer.SetNewSpotifyClient(w, r, state[0])
+
+	if err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(fmt.Sprintf("Error setting new spotify client: " + err.Error())))
+		return
+	}
+
+	clientOrigin, err := redisLayer.GetKeyString(state[0])
+	if err != nil {
+		fmt.Printf("Error getting state/origin Redis key: " + err.Error())
+	}
+
+	redirectURL := clientOrigin + "/#/?state=" + state[0] + "&token=" + accessToken
+
+	http.Redirect(w, r, redirectURL, http.StatusSeeOther)
+}
+
+func ExtractTokenFromHeader(r *http.Request) string {
+	tokenHeader := r.Header.Get("Authorization")
+	return tokenHeader[7:]
+}
+
 func enableCors(w *http.ResponseWriter) {
 	(*w).Header().Set("Access-Control-Allow-Origin", "*")
+	(*w).Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
+	(*w).Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
 }

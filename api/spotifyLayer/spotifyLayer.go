@@ -2,17 +2,21 @@ package spotifyLayer
 
 import (
 	"encoding/json"
+	"errors"
 	"flag"
 	"fmt"
 	"net/http"
 	"os"
 	"otherside/api/redisLayer"
+	"time"
 
 	"github.com/zmb3/spotify"
 )
 
 var spotifyAuth = spotify.NewAuthenticator(redirectURL, spotify.ScopePlaylistModifyPublic)
-var spotifyClient spotify.Client
+
+var currentClients = make(map[string]spotify.Client)
+var clientTimers = make(map[string]*time.Timer)
 
 var applicationPort = "8081"
 var baseURL = "http://localhost:" + applicationPort + "/"
@@ -21,27 +25,63 @@ var redirectURL = baseURL + "callback"
 var SPOTIFY_ID = os.Getenv("SPOTIFY_ID")
 var SPOTIFY_SECRET = os.Getenv("SPOTIFY_SECRET")
 
+type SpotifyArtistImage struct {
+	Id       spotify.ID
+	Name     string
+	ImageURL string
+}
+
 func ObtainAuthenticationURL(state string) string {
 	spotifyAuth.SetAuthInfo(SPOTIFY_ID, SPOTIFY_SECRET)
 
 	return spotifyAuth.AuthURL(state)
 }
 
-func SetNewSpotifyClient(w http.ResponseWriter, r *http.Request, state string) error {
+func SetNewSpotifyClient(w http.ResponseWriter, r *http.Request, state string) (string, error) {
 	token, err := spotifyAuth.Token(state, r)
 
 	if err != nil {
-		http.Error(w, "Couldn't get token", http.StatusNotFound)
-		return err
+		fmt.Printf("Couldn't get token: " + err.Error())
+		return "", err
 	}
 
-	spotifyClient = spotifyAuth.NewClient(token)
+	newSpotifyClient := spotifyAuth.NewClient(token)
 
-	return nil
+	if _, accessTokenExists := currentClients[token.AccessToken]; accessTokenExists {
+		return token.AccessToken, nil
+	}
+
+	currentClients[token.AccessToken] = newSpotifyClient
+	CreateNewClientTimer(token.AccessToken)
+
+	return token.AccessToken, nil
 }
 
-func GetTopSpotifyArtistTrack(artistID spotify.ID) (spotify.FullTrack, error) {
+func CreateNewClientTimer(token string) {
+	newClientTimer := time.NewTimer(5 * time.Minute)
+	clientTimers[token] = newClientTimer
+
+	go func() {
+		<-newClientTimer.C
+		delete(currentClients, token)
+		delete(clientTimers, token)
+		fmt.Printf("Client data for token %s deleted\n", token)
+	}()
+}
+
+func ResetClientTimer(token string) {
+	clientTimer := clientTimers[token]
+	clientTimer.Reset(5 * time.Minute)
+}
+
+func GetTopSpotifyArtistTrack(token string, artistID spotify.ID) (spotify.FullTrack, error) {
 	var cachedTopTrack spotify.FullTrack
+
+	spotifyClient, err := ObtainSpotifyClient(token)
+	if err != nil {
+		fmt.Printf("GetTopSpotifyArtistTrack: " + err.Error())
+		return cachedTopTrack, err
+	}
 
 	topTrackAlreadyCached, err := redisLayer.Exists(string(artistID))
 	if err != nil {
@@ -50,7 +90,7 @@ func GetTopSpotifyArtistTrack(artistID spotify.ID) (spotify.FullTrack, error) {
 	}
 
 	if topTrackAlreadyCached {
-		redisData, err := redisLayer.GetArtistTopTrack(string(artistID))
+		redisData, err := redisLayer.GetKeyBytes(string(artistID))
 		if err != nil {
 			fmt.Printf("Couldn't get value for artistID key %s in Redis: "+err.Error(), string(artistID))
 			return cachedTopTrack, err
@@ -76,7 +116,7 @@ func GetTopSpotifyArtistTrack(artistID spotify.ID) (spotify.FullTrack, error) {
 				fmt.Printf("Can't marshal artist %s top tracks: "+err.Error(), string(artistID))
 			}
 
-			redisLayer.SetArtistTopTrack(string(artistID), serializedTopTrack)
+			redisLayer.SetKeyBytes(string(artistID), serializedTopTrack)
 			return topTracks[0], nil
 		} else {
 			return cachedTopTrack, nil
@@ -84,8 +124,14 @@ func GetTopSpotifyArtistTrack(artistID spotify.ID) (spotify.FullTrack, error) {
 	}
 }
 
-func GeneratePlayList(playlistName string, description string) (spotify.ID, error) {
+func GeneratePlayList(token string, playlistName string, description string) (spotify.ID, error) {
 	flag.Parse()
+
+	spotifyClient, err := ObtainSpotifyClient(token)
+	if err != nil {
+		fmt.Printf("GeneratePlayList: " + err.Error())
+		return "", err
+	}
 
 	currentUser, err := spotifyClient.CurrentUser()
 	if err != nil {
@@ -106,7 +152,13 @@ func GeneratePlayList(playlistName string, description string) (spotify.ID, erro
 	return playList.ID, nil
 }
 
-func AddTracksToPlaylist(playlistID spotify.ID, tracksToAdd []spotify.FullTrack) error {
+func AddTracksToPlaylist(token string, playlistID spotify.ID, tracksToAdd []spotify.FullTrack) error {
+	spotifyClient, err := ObtainSpotifyClient(token)
+	if err != nil {
+		fmt.Printf("AddTracksToPlaylist: " + err.Error())
+		return err
+	}
+
 	for _, track := range tracksToAdd {
 		_, err := spotifyClient.AddTracksToPlaylist(playlistID, track.ID)
 		if err != nil {
@@ -118,35 +170,87 @@ func AddTracksToPlaylist(playlistID spotify.ID, tracksToAdd []spotify.FullTrack)
 	return nil
 }
 
-func SearchAndFindSpotifyArtistID(artistName string) (spotify.ID, error) {
+func SearchAndFindSpotifyArtistID(token string, artistName string) (SpotifyArtistImage, error) {
+	var spotifyArtistImage SpotifyArtistImage
+
+	spotifyClient, err := ObtainSpotifyClient(token)
+	if err != nil {
+		fmt.Printf("SearchAndFindSpotifyArtistID: " + err.Error())
+		return spotifyArtistImage, err
+	}
+
 	artistNameAlreadyCached, err := redisLayer.Exists(artistName)
 	if err != nil {
 		fmt.Print("Couldn't access artist name %s from Redis cache: "+err.Error(), artistName)
-		return "", err
+		return spotifyArtistImage, err
 	}
 
 	if artistNameAlreadyCached {
-		artistID, err := redisLayer.GetKeyString(artistName)
+		redisData, err := redisLayer.GetKeyBytes(artistName)
 
 		if err != nil {
-			fmt.Printf("Error getting value for artistID %s from Redis: "+err.Error(), artistID)
-			return "", err
+			fmt.Printf("Error getting value for artist %s from Redis: "+err.Error(), artistName)
+			return spotifyArtistImage, err
 		}
 
-		return spotify.ID(artistID), nil
+		json.Unmarshal(redisData, &spotifyArtistImage)
+		if err != nil {
+			fmt.Printf("Error unmarshalling value for artist %s from Redis: "+err.Error(), artistName)
+		}
+
+		return spotifyArtistImage, nil
 	}
 
 	searchResults, err := spotifyClient.Search(artistName, spotify.SearchTypeArtist)
 	if err != nil {
 		fmt.Printf("Error searching Spotify for artist %s"+err.Error(), artistName)
-		return "", err
+		return spotifyArtistImage, err
 	} else {
 		if len(searchResults.Artists.Artists) != 0 {
 			artistID := searchResults.Artists.Artists[0].ID
-			redisLayer.SetKeyString(artistName, string(artistID))
-			return artistID, nil
+			spotifyArtistImage.Id = artistID
+			spotifyArtistImage.Name = artistName
+			spotifyArtistImage.ImageURL = searchResults.Artists.Artists[0].Images[0].URL
+
+			spotifyArtistSerialized, err := json.Marshal(spotifyArtistImage)
+			if err != nil {
+				fmt.Printf("Error marshalling spotify artist: " + err.Error())
+			}
+
+			redisLayer.SetKeyBytes(artistName, spotifyArtistSerialized)
+			return spotifyArtistImage, nil
 		}
 	}
 
-	return "", nil
+	return spotifyArtistImage, nil
+}
+
+func GetCurrentUser(token string) (string, error) {
+
+	spotifyClient, err := ObtainSpotifyClient(token)
+	if err != nil {
+		fmt.Printf("GetCurrentUser: " + err.Error())
+		return "", err
+	}
+
+	currentUser, err := spotifyClient.CurrentUser()
+	if err != nil {
+		fmt.Printf("Error getting current Spotify user: " + err.Error())
+		return "", err
+	}
+
+	return currentUser.DisplayName, err
+}
+
+func ObtainSpotifyClient(token string) (spotify.Client, error) {
+	if spotifyClient, exists := currentClients[token]; exists {
+		if _, exists := clientTimers[token]; exists {
+			ResetClientTimer(token)
+		} else {
+			fmt.Printf("Couldn't reset timer for token %s\n", token)
+		}
+		return spotifyClient, nil
+	} else {
+		return spotifyClient, errors.New("Spotify client does not exist.")
+	}
 }
