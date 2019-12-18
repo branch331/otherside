@@ -1,0 +1,34 @@
+
+{
+	"ImportPath": "otherside/api",
+	"GoVersion": "go1.13",
+	"GodepVersion": "v80",
+	"Deps": [
+		{
+			"ImportPath": "github.com/gomodule/redigo/redis",
+			"Comment": "v1.7.0-13-g4f569a4",
+			"Rev": "4f569a4708584d192c9b2e49bb2d9936341f1e68"
+		},
+		{
+			"ImportPath": "github.com/gorilla/mux",
+			"Comment": "v1.7.3-11-gf395758",
+			"Rev": "f395758b854c4efa789b8c1e9b73479704c548cb"
+		},
+		{
+			"ImportPath": "github.com/zmb3/spotify",
+			"Rev": "e12fb981aacbbe98868183a3056d162245ec96fa"
+		},
+		{
+			"ImportPath": "golang.org/x/net/context/ctxhttp",
+			"Rev": "d64ee3fa515a813805f6ced54cea49bed2bd62b9"
+		},
+		{
+			"ImportPath": "golang.org/x/oauth2",
+			"Rev": "0f29369cfe4552d0e4bcddc57cc75f4d7e672a33"
+		},
+		{
+			"ImportPath": "golang.org/x/oauth2/internal",
+			"Rev": "0f29369cfe4552d0e4bcddc57cc75f4d7e672a33"
+		}
+	]
+}

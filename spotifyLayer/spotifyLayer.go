@@ -9,18 +9,14 @@ import (
 	"os"
 	"otherside/api/redisLayer"
 	"time"
-
 	"github.com/zmb3/spotify"
 )
 
-var spotifyAuth = spotify.NewAuthenticator(redirectURL, spotify.ScopePlaylistModifyPublic)
+var spotifyRedirectUri = os.Getenv("SPOTIFY_REDIRECT_URI")
+var spotifyAuth = spotify.NewAuthenticator(spotifyRedirectUri, spotify.ScopePlaylistModifyPublic)
 
 var currentClients = make(map[string]spotify.Client)
 var clientTimers = make(map[string]*time.Timer)
-
-var applicationPort = "8081"
-var baseURL = "http://localhost:" + applicationPort + "/"
-var redirectURL = baseURL + "callback"
 
 var SPOTIFY_ID = os.Getenv("SPOTIFY_ID")
 var SPOTIFY_SECRET = os.Getenv("SPOTIFY_SECRET")
@@ -210,7 +206,10 @@ func SearchAndFindSpotifyArtistID(token string, artistName string) (SpotifyArtis
 			artistID := searchResults.Artists.Artists[0].ID
 			spotifyArtistImage.Id = artistID
 			spotifyArtistImage.Name = artistName
-			spotifyArtistImage.ImageURL = searchResults.Artists.Artists[0].Images[0].URL
+
+			if len(searchResults.Artists.Artists[0].Images) != 0 {
+				spotifyArtistImage.ImageURL = searchResults.Artists.Artists[0].Images[0].URL
+			}
 
 			spotifyArtistSerialized, err := json.Marshal(spotifyArtistImage)
 			if err != nil {

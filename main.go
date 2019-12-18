@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"otherside/api/seatgeekLayer"
 	"otherside/api/spotifyLayer"
 	"reflect"
@@ -30,7 +31,7 @@ type ArtistIDResponse struct {
 	err      error
 }
 
-var applicationPort = "8081"
+var applicationPort = os.Getenv("PORT")
 var timeToday seatgeekLayer.TimeToday
 var cityPostcodeMap map[string]string
 var availableGenres []string
@@ -50,6 +51,7 @@ func main() {
 	router.HandleFunc("/artistids", ArtistIDs).Methods("POST", "OPTIONS")
 	router.HandleFunc("/buildplaylist", BuildPlaylist).Methods("POST", "OPTIONS")
 
+	fmt.Printf("Starting server on port %s\n", applicationPort)
 	log.Fatal(http.ListenAndServe(":"+applicationPort, router))
 }
 
@@ -498,6 +500,7 @@ func Authenticate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	authenticationUrl := spotifyLayer.ObtainAuthenticationURL(state[0])
+
 	fmt.Fprint(w, authenticationUrl)
 }
 
