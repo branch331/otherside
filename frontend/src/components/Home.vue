@@ -303,7 +303,6 @@ export default {
       axios.get(getAuthenticationRequestUrl)
         .then(response => {
           this.spotifyAuthenticationUrl = response.data;
-          alert(this.spotifyAuthenticationUrl);
         })
     },
     setNewSpotifyToken: function() {
