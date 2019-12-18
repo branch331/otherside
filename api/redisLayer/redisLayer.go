@@ -2,11 +2,13 @@ package redisLayer
 
 import (
 	"fmt"
+	"os"
 	"github.com/gomodule/redigo/redis"
 )
 
 var pool *redis.Pool
 var connection redis.Conn
+var redisURL = os.Getenv("REDIS_URL")
 
 func Initialize() {
 	pool = newPool()
@@ -107,9 +109,15 @@ func FlushDb() error {
 func newPool() *redis.Pool {
 	return &redis.Pool{
 		MaxIdle:   3,
-		MaxActive: 2000,
+		MaxActive: 20,
 		Dial: func() (redis.Conn, error) {
-			c, err := redis.Dial("tcp", ":6379")
+			var c redis.Conn
+			var err error
+			if (redisURL == "") {
+				c, err = redis.Dial("tcp", ":6379")
+			} else {
+				c, err = redis.DialURL(redisURL)
+			}
 			if err != nil {
 				panic(err.Error())
 			}

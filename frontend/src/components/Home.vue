@@ -228,8 +228,8 @@ export default {
   },
   mounted () {
     //Assumes the API is hosted on the same machine
-    this.apiAddress = this.obtainApiAddress();
-
+    this.apiAddress = "https://otherside-api.herokuapp.com";
+    //this.apiAddress = "http://localhost:8081";
     this.initializeStore();
 
     if (this.selectedCities.length != 0 && this.selectedGenres.length != 0) {
@@ -259,7 +259,7 @@ export default {
     getAvailableCities: function() {
       this.availableCities = new Array();
 
-      var citiesURL = `${this.apiAddress}:8081/cities`;
+      var citiesURL = `${this.apiAddress}/cities`;
 
       axios.get(citiesURL)
         .then((response => {
@@ -269,7 +269,7 @@ export default {
     getAvailableGenres: function() {
       this.availableGenres = new Array();
 
-      var genresURL = `${this.apiAddress}:8081/genres`;
+      var genresURL = `${this.apiAddress}/genres`;
 
       axios.get(genresURL)
         .then((response => {
@@ -280,7 +280,7 @@ export default {
       var cityString = this.arrayToQueryString(cities);
       var genreString = this.arrayToQueryString(genres);
 
-      var localEventsURL = `${this.apiAddress}:8081/localevents?cities=` +
+      var localEventsURL = `${this.apiAddress}/localevents?cities=` +
       cityString +
       "&genres=" +
       genreString;
@@ -297,16 +297,17 @@ export default {
     setNewSpotifyAuthenticationUrl: function() {
       this.stateString = this.getRandomStateString()
 
-      var getAuthenticationRequestUrl = `${this.apiAddress}:8081/authenticate?state=`
+      var getAuthenticationRequestUrl = `${this.apiAddress}/authenticate?state=`
       +  this.stateString;
 
       axios.get(getAuthenticationRequestUrl)
         .then(response => {
           this.spotifyAuthenticationUrl = response.data;
+          alert(this.spotifyAuthenticationUrl);
         })
     },
     setNewSpotifyToken: function() {
-      var getSpotifyTokenRequestURl = `${this.apiAddress}:8081/token?state=` + this.stateString;
+      var getSpotifyTokenRequestURl = `${this.apiAddress}/token?state=` + this.stateString;
 
       axios.get(getSpotifyTokenRequestURl)
         .then(response => {
@@ -330,7 +331,7 @@ export default {
       return queryString;
     },
     getArtistIDs: function(events) {
-      var artistIDsURL = `${this.apiAddress}:8081/artistids`;
+      var artistIDsURL = `${this.apiAddress}/artistids`;
 
       const auth = {
         headers: {
@@ -353,8 +354,8 @@ export default {
         });
     },
     buildPlaylist: function (name, desc) {
-      var topTracksURL = `${this.apiAddress}:8081/toptracks`;
-      var buildPlaylistURL = `${this.apiAddress}:8081/buildplaylist?name=` +
+      var topTracksURL = `${this.apiAddress}/toptracks`;
+      var buildPlaylistURL = `${this.apiAddress}/buildplaylist?name=` +
         name +
         "&desc=" +
         desc;
