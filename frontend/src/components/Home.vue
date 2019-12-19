@@ -231,6 +231,7 @@ export default {
   mounted () {
     this.apiAddress = "https://otherside-api.herokuapp.com";
     //this.apiAddress = "http://localhost:8081";
+    
     this.initializeStore();
 
     if (this.selectedCities.length != 0 && this.selectedGenres.length != 0) {
