@@ -1,7 +1,9 @@
 <template>
   <div class="home">
-    <AppHeader :stateString="stateString">
-    </AppHeader>
+    <div v-if="apiAddress">
+      <AppHeader :token="token" :apiAddress="apiAddress">
+      </AppHeader>
+    </div>
 
     <div class="mainBody">
     <div class="row">
@@ -227,9 +229,8 @@ export default {
     }
   },
   mounted () {
-    //Assumes the API is hosted on the same machine
-    this.apiAddress = "https://otherside-api.herokuapp.com";
-    //this.apiAddress = "http://localhost:8081";
+    //this.apiAddress = "https://otherside-api.herokuapp.com";
+    this.apiAddress = "http://localhost:8081";
     this.initializeStore();
 
     if (this.selectedCities.length != 0 && this.selectedGenres.length != 0) {

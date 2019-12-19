@@ -35,15 +35,14 @@ import axios from 'axios';
 
 export default {
   name: 'AppHeader',
-  props: ['stateString'],
+  props: ['token', 'apiAddress'],
   data () {
     return {
-      currentUser: null,
-      token: null
+      currentUser: null
     }
   },
   mounted () {
-    if (this.token) {
+    if (this.token && this.apiAddress != null && this.currentUser == null) {
       this.getCurrentUser();
     }
   },
@@ -55,7 +54,8 @@ export default {
         }
       }
 
-      var currentUserURL = "http://localhost:8081/user";
+      var currentUserURL = `${this.apiAddress}/user`;
+      
       axios.get(currentUserURL, auth)
         .then((response => {
           this.currentUser = response.data;
