@@ -32,6 +32,7 @@ type ArtistIDResponse struct {
 }
 
 var applicationPort = os.Getenv("PORT")
+var clientOrigin = os.Getenv("CLIENT_APPLICATION_URL")
 var timeToday seatgeekLayer.TimeToday
 var cityPostcodeMap map[string]string
 var availableGenres []string
@@ -494,11 +495,6 @@ func Authenticate(w http.ResponseWriter, r *http.Request) {
 		fmt.Printf("State parameter missing from authenticate request.")
 	}
 
-	redisErr := redisLayer.SetKeyString(state[0], r.Header.Get("Origin"))
-	if redisErr != nil {
-		fmt.Printf("Error setting state/origin Redis key: " + err.Error())
-	}
-
 	authenticationUrl := spotifyLayer.ObtainAuthenticationURL(state[0])
 
 	fmt.Fprint(w, authenticationUrl)
@@ -524,12 +520,7 @@ func Callback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	clientOrigin, err := redisLayer.GetKeyString(state[0])
-	if err != nil {
-		fmt.Printf("Error getting state/origin Redis key: " + err.Error())
-	}
-
-	redirectURL := clientOrigin + "/#/?state=" + state[0] + "&token=" + accessToken
+	redirectURL := clientOrigin + "?state=" + state[0] + "&token=" + accessToken
 
 	http.Redirect(w, r, redirectURL, http.StatusSeeOther)
 }
