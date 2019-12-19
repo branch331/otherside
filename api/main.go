@@ -205,6 +205,11 @@ func QueryStringToArray(queryString string) []string {
 func User(w http.ResponseWriter, r *http.Request) {
 	enableCors(&w)
 
+	if r.Method == "OPTIONS" {
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+
 	token := ExtractTokenFromHeader(r)
 
 	currentUser, err := spotifyLayer.GetCurrentUser(token)
