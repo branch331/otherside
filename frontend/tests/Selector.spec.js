@@ -1,14 +1,19 @@
 import { shallowMount } from '@vue/test-utils'
 import Selector from '../src/components/Selector.vue'
+import Vue from 'vue'
 
 describe('Selector', () => {
-    const wrapper = shallowMount(Selector, {
-        propsData: {
-            selectorName: "testSelector",
-            selectedItems: ['Sin City', 'Atlantis'],
-            availableItems: ['New Delhi', 'Loverstown', 'Penicillin'],
-            maxItems: "4"
-        }
+    let wrapper;
+
+    beforeEach(() => {
+        wrapper = shallowMount(Selector, {
+            propsData: {
+                selectorName: "testSelector",
+                selectedItems: ['Sin City', 'Atlantis'],
+                availableItems: ['New Delhi', 'Loverstown', 'Penicillin'],
+                maxItems: "4"
+            }
+        })
     })
 
     it('populates selected items properly', () => {
@@ -29,9 +34,7 @@ describe('Selector', () => {
         expect(wrapper.vm.showSearchResults).toBe(false)
 
         searchBar.trigger('focus')
-        
         expect(wrapper.vm.showSearchResults).toBe(true)
-        const availableItem = wrapper.findAll('.searchResultItem')
 
         searchBar.trigger('blur')
         expect(wrapper.vm.showSearchResults).toBe(false)   
@@ -57,44 +60,43 @@ describe('Selector', () => {
         expect(wrapper.vm.availableItems.length).toBe(4)
     })
 
-    it('transfers values from available items to selected items', () => {
+    it('transfers values from available items to selected items', async () => {
         const searchBar = wrapper.find('.searchBar')
         searchBar.trigger('focus')
 
         searchBar.element.value = 'lover'
         searchBar.trigger('input')
 
-        expect(wrapper.vm.availableItems.length).toBe(4)
+        expect(wrapper.vm.availableItems.length).toBe(3)
 
+        await Vue.nextTick()
         const availableItem = wrapper.find('.searchResultItem')
         availableItem.trigger('mousedown')
 
-        expect(wrapper.vm.availableItems.length).toBe(3)
+        expect(wrapper.vm.availableItems.length).toBe(2)
     })
 
-    it('prevents adding more selectedItems than the max', () => {
-        /*
+    it('prevents adding more selectedItems than the max', async () => {
         const searchBar = wrapper.find('.searchBar')
         searchBar.trigger('focus')
         searchBar.element.value = ''
         searchBar.trigger('input')
         
         expect(wrapper.vm.selectedItems.length).toBe(2)
-        expect(wrapper.vm.filteredItems.length).toBe(3)
 
+        await Vue.nextTick()
         const availableItems = wrapper.findAll('.searchResultItem')
 
         availableItems.at(0).trigger('mousedown')
+        await Vue.nextTick()
         expect(wrapper.vm.selectedItems.length).toBe(3)
-        expect(wrapper.vm.filteredItems.length).toBe(2)
+
+        availableItems.at(1).trigger('mousedown')
+        await Vue.nextTick()
+        expect(wrapper.vm.selectedItems.length).toBe(4)
 
         availableItems.at(2).trigger('mousedown')
+        await Vue.nextTick()
         expect(wrapper.vm.selectedItems.length).toBe(4)
-        expect(wrapper.vm.filteredItems.length).toBe(1)
-
-        availableItems.at(3).trigger('mousedown')
-        expect(wrapper.vm.selectedItems.length).toBe(4)
-        expect(wrapper.vm.filteredItems.length).toBe(1)
-        */
     })
 })
