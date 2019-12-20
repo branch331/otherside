@@ -20,31 +20,31 @@
     </h1>
     <div class='clearfix'>
       <div class='fl pad1y space-right2'>
-        <span class="strong">18.75% </span>
+        <span class="strong">87.5% </span>
         <span class="quiet">Statements</span>
-        <span class='fraction'>3/16</span>
+        <span class='fraction'>14/16</span>
       </div>
       <div class='fl pad1y space-right2'>
-        <span class="strong">0% </span>
+        <span class="strong">70% </span>
         <span class="quiet">Branches</span>
-        <span class='fraction'>0/10</span>
+        <span class='fraction'>7/10</span>
       </div>
       <div class='fl pad1y space-right2'>
-        <span class="strong">40% </span>
+        <span class="strong">100% </span>
         <span class="quiet">Functions</span>
-        <span class='fraction'>2/5</span>
+        <span class='fraction'>5/5</span>
       </div>
       <div class='fl pad1y space-right2'>
-        <span class="strong">18.75% </span>
+        <span class="strong">87.5% </span>
         <span class="quiet">Lines</span>
-        <span class='fraction'>3/16</span>
+        <span class='fraction'>14/16</span>
       </div>
     </div>
     <p class="quiet">
       Press <em>n</em> or <em>j</em> to go to the next uncovered block, <em>b</em>, <em>p</em> or <em>k</em> for the previous block.
     </p>
   </div>
-  <div class='status-line low'></div>
+  <div class='status-line high'></div>
 <pre><table class="coverage">
 <tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
 <a name='L2'></a><a href='#L2'>2</a>
@@ -164,31 +164,31 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">3x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">3x</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-yes">9x</span>
+<span class="cline-any cline-yes">4x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -239,32 +239,32 @@ export default {
     },
     computed: {
         filteredItems: {
-<span class="fstat-no" title="function not covered" >            get: function() {</span>
-<span class="cstat-no" title="statement not covered" >                var filteredArray = new Array();</span>
+            get: function() {
+                var filteredArray = new Array();
 &nbsp;
-<span class="cstat-no" title="statement not covered" >                if (this.searchTerm == null) {</span>
+<span class="missing-if-branch" title="if path not taken" >I</span>                if (this.searchTerm == null) {
 <span class="cstat-no" title="statement not covered" >                    return this.availableItems;</span>
                 }
 &nbsp;
-<span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >                this.availableItems.forEach(element =&gt; {</span></span>
-<span class="cstat-no" title="statement not covered" >                    if (element.toLowerCase().includes(this.searchTerm.toLowerCase())) {</span>
-<span class="cstat-no" title="statement not covered" >                        filteredArray.push(element);</span>
+                this.availableItems.forEach(element =&gt; {
+                    if (element.toLowerCase().includes(this.searchTerm.toLowerCase())) {
+                        filteredArray.push(element);
                     }
                 });
 &nbsp;
-<span class="cstat-no" title="statement not covered" >                return filteredArray;</span>
+                return filteredArray;
             }
         }
     },
     methods: {
-<span class="fstat-no" title="function not covered" >        transferArrayValue: function(sourceArray, targetArray, value) {</span>
-<span class="cstat-no" title="statement not covered" >            var index = sourceArray.indexOf(value);</span>
-<span class="cstat-no" title="statement not covered" >            if (index &gt; -1) {</span>
-<span class="cstat-no" title="statement not covered" >                if (targetArray == this.selectedItems &amp;&amp; targetArray.length == this.maxItems) {</span>
+        transferArrayValue: function(sourceArray, targetArray, value) {
+            var index = sourceArray.indexOf(value);
+<span class="missing-if-branch" title="else path not taken" >E</span>            if (index &gt; -1) {
+<span class="missing-if-branch" title="if path not taken" >I</span>                if (targetArray == this.selectedItems &amp;&amp; targetArray.length == this.maxItems) {
 <span class="cstat-no" title="statement not covered" >                    alert("Nope!");</span>
                 } else {
-<span class="cstat-no" title="statement not covered" >                    sourceArray.splice(index, 1);</span>
-<span class="cstat-no" title="statement not covered" >                    targetArray.push(value)</span>
+                    sourceArray.splice(index, 1);
+                    targetArray.push(value)
                 }
             }
         },
@@ -280,7 +280,7 @@ export default {
 </div><!-- /wrapper -->
 <div class='footer quiet pad2 space-top1 center small'>
   Code coverage
-  generated by <a href="https://istanbul.js.org/" target="_blank">istanbul</a> at Thu Dec 19 2019 21:01:07 GMT-0600 (Central Standard Time)
+  generated by <a href="https://istanbul.js.org/" target="_blank">istanbul</a> at Thu Dec 19 2019 22:00:44 GMT-0600 (Central Standard Time)
 </div>
 </div>
 <script src="prettify.js"></script>
