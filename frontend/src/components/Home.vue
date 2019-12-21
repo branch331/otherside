@@ -8,7 +8,7 @@
     <div class="mainBody">
     <div class="row">
       <div class="leftsidebar col-md-4">
-            {{selectedCities}}
+        {{selectedCities}}
 
         <Selector 
           selectorName="cities"
@@ -17,7 +17,7 @@
           v-bind:availableItems="availableCities">
         </Selector>
 
-    {{selectedGenres}}
+        {{selectedGenres}}
         <Selector 
           selectorName="genres"
           maxItems="10"
@@ -94,7 +94,7 @@ import createPersistedState from "vuex-persistedstate";
 
 Vue.use(Vuex);
 
-const state = {
+export const state = {
   selectedCities: null,
   selectedGenres: null,
   availableCities: null,
@@ -103,7 +103,7 @@ const state = {
   token: null
 };
 
-const mutations = {
+export const mutations = {
   UPDATE_SELECTED_CITIES(state, payload) {
     state.selectedCities = payload;
   },
@@ -124,7 +124,7 @@ const mutations = {
   }
 };
 
-const store = new Vuex.Store({
+export const store = new Vuex.Store({
   state,
   mutations,
   plugins: [createPersistedState()]
