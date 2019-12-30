@@ -32,12 +32,14 @@ a {
   overflow: scroll;
   background: rgba(31, 123, 106, 0.6);
   color: white;
-  height: 35em;
-  margin: 0;
+  height: 30em;
   padding: 0;
   border: 1px solid transparent;
   border-radius: 20px;
-  margin: 2em 5em 5em 5em;
+  margin: 2em 6em 4em 4em;
+  width: 30em;
+  float: left;
+  display: inline;
 }
 
 .selectedItemList{
@@ -93,8 +95,8 @@ a {
 .searchResults {
   position: absolute;
   overflow: scroll;
-  max-height: 10em;
-  width: 100%;
+  max-height: 6.6em;
+  width: 98%;
   border: 1px solid black;
   background-color: rgb(20, 145, 20);
 }
@@ -110,13 +112,15 @@ a {
 
 /* END SEARCH RESULTS */
 
-
-
 .eventsHolder {
   overflow: scroll;
   height: 20em;
   width: 40em;
-  margin: 6em auto 0 auto;
+  margin: 4em auto 0 auto;
+}
+
+.loginHeader {
+  margin-bottom: 1em;
 }
 
 .performerCarousel {
@@ -162,13 +166,10 @@ a {
   position: absolute;
   margin-left: 24em;
   margin-top: 1em;
-}
-
-#performerCarouselLeft {
   opacity: 0.3;
 }
 
-#performerCarouselRight {
+#performerCarouselLeft {
   opacity: 0.3;
 }
 
@@ -176,6 +177,8 @@ a {
     height: 35em;
     margin: 0;
     padding: 0;
+    float: left;
+    display: inline;
 }
 
 .playlistcontent .btn { 
@@ -188,7 +191,8 @@ a {
     line-height: 1;
     border-radius: 500px;
     padding: 16px 48px 18px;
-    margin-top: 2em;
+    margin-top: 4em;
+    margin-right: 1em;
     transition-property: background-color,border-color,color,box-shadow,filter;
     transition-duration: .3s;
     border-width: 0;
@@ -216,3 +220,122 @@ a {
   font-size: 20px;
   font-weight: bold;
 }
+
+@media (max-width:1300px) {
+  .leftsidebar {
+    width: 45em;
+    margin: 2em auto 0 auto;
+    display: block;
+    float: none;
+  }
+
+  .searchResults {
+    width: 98.5%;
+  }
+
+  .playlistcontent {
+    display: block;
+    float: none;
+  }
+
+  .eventsHolder {
+    margin-top: 2em;
+  }
+
+  .loginHeader {
+    margin-bottom: 0.5em;
+  }
+
+  .mainBody {
+    height: 62em;
+    color: white;
+    border-top: 1px solid #DDD2D1;
+  }
+
+  .playlistcontent .btn { 
+    margin-top: 3em;
+  }
+}
+
+@media (max-width:900px) {
+  .leftsidebar {
+    width: 40em;
+  }
+}
+
+@media (max-width:768px) {
+  .leftsidebar {
+    width: 35em;
+  }
+
+  .eventsHolder {
+    overflow: hidden;
+  }
+
+  #performerCarouselRight {
+    display: none;
+  }
+  
+  #performerCarouselLeft {
+    display: none;
+  }
+
+  .loginHeader {
+    margin-bottom: -1em;
+  }
+
+  .playlistcontent .btn { 
+    margin-top: 0.5em;
+  }
+
+  .mainBody {
+    height: 60em;
+  }
+}
+
+@media (max-width:635px) {
+  .leftsidebar {
+    width: 30em;
+  }
+
+  .eventsHolder {
+    width: 25em;
+  }
+
+  .loginHeader {
+    font-size: 1.5em;
+  }
+
+  #performerCarouselMain {
+    position: relative;
+    margin: 3em auto;
+  }
+
+  .playlistcontent .btn { 
+    margin-left: 1em;
+  }
+}
+
+@media (max-width:525px) {
+  .leftsidebar {
+    width: 25em;
+  }
+
+  .searchResults {
+    width: 97.5%;
+  }
+} 
+
+@media (max-width:425px) {
+  .leftsidebar {
+    width: 20em;
+  }
+
+  .loginHeader {
+    font-size: 1.4em;
+  }
+
+  html {
+    width: 400px;
+  }
+} 

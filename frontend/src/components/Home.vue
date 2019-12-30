@@ -6,8 +6,8 @@
     </div>
 
     <div class="mainBody">
-    <div class="row">
-      <div class="leftsidebar col-md-4">
+    <div>
+      <div class="leftsidebar">
         <Selector 
           selectorName="CITIES"
           maxItems="6"
@@ -25,7 +25,7 @@
         </Selector>
       </div>
 
-      <div class="playlistcontent col-md-6">
+      <div class="playlistcontent">
 
         <div class="eventsHolder">
 
