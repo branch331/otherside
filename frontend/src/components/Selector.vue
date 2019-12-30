@@ -1,6 +1,6 @@
 <template>
     <div class="selections">
-        <h5>1. Pick some {{selectorName}}</h5>
+        <h5>{{index}}. Pick some <strong><em>{{selectorName}}</em></strong>...</h5>
 
         <input type="text" 
             class="searchBar"
@@ -29,7 +29,8 @@ export default {
         selectorName: String,
         selectedItems: Array,
         availableItems: Array,
-        maxItems: String
+        maxItems: String,
+        index: String
     },
     data () {
         return {

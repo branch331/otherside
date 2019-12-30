@@ -72,8 +72,13 @@ a {
 
 .selections {
   position: relative;
-  margin: 5px auto;
+  margin: 30px auto;
   padding: 0 5px;
+  min-height: 10em;
+}
+
+.selections h5 {
+  font-size: 1.5em;
 }
 
 .selections ul {
@@ -105,6 +110,8 @@ a {
 
 /* END SEARCH RESULTS */
 
+
+
 .eventsHolder {
   overflow: scroll;
   height: 20em;
@@ -127,6 +134,7 @@ a {
 .performerCarousel .carousel-caption {
   padding: 0;
   bottom: 0;
+  font-size: 1.2em;
 }
 
 .performerSlide {

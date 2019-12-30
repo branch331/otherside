@@ -8,19 +8,18 @@
     <div class="mainBody">
     <div class="row">
       <div class="leftsidebar col-md-4">
-        {{selectedCities}}
-
         <Selector 
-          selectorName="cities"
+          selectorName="CITIES"
           maxItems="6"
+          index="1"
           v-bind:selectedItems="selectedCities"
           v-bind:availableItems="availableCities">
         </Selector>
 
-        {{selectedGenres}}
         <Selector 
-          selectorName="genres"
+          selectorName="GENRES"
           maxItems="10"
+          index="2"
           v-bind:selectedItems="selectedGenres"
           v-bind:availableItems="availableGenres">
         </Selector>
@@ -29,7 +28,8 @@
       <div class="playlistcontent col-md-6">
 
         <div class="eventsHolder">
-          <h2>Events Data:</h2>
+
+          <h2 class="loginHeader">3. <strong><em>LOG IN</em></strong> and <strong><em>BUILD</em></strong> your playlist!</h2>
 
           <div v-if="artistImages"> 
             <PerformerCarousel 
@@ -50,6 +50,26 @@
               v-bind:artistImages="artistImages">
             </PerformerCarousel>
           </div>
+          <div v-else>
+            <PerformerCarousel 
+              carouselId="performerCarouselLeft"
+              ref="carouselPlaceholderLeft"
+              v-bind:artistImages="placeholderArtistImages">
+            </PerformerCarousel>
+
+            <PerformerCarousel 
+              carouselId="performerCarouselRight"
+              ref="carouselPlaceholderRight"
+              v-bind:artistImages="placeholderArtistImages">
+            </PerformerCarousel>
+
+            <PerformerCarousel 
+              carouselId="performerCarouselMain"
+              ref="carouselPlaceholderMain"
+              v-bind:artistImages="placeholderArtistImages">
+            </PerformerCarousel>
+          </div>
+
         </div>
 
         <div class="btnHolder" v-if="!isStateStringCorrect">
@@ -58,13 +78,6 @@
         
         <div class="btnHolder" v-if="isStateStringCorrect">
           <button class="btn" :disabled="playlistLoading" v-on:click="buildPlaylist('Spooky Title', 'Spooooky Description!')">Build Playlist</button>
-        </div>
-
-        <div v-if="token">
-          {{token}}
-        </div>
-        <div v-if="localEvents">
-        {{localEvents}}
         </div>
 
         <div class="playlistResult" v-if="playlistLoading === true">
@@ -149,7 +162,10 @@ export default {
       artistImages: null,
       isStateStringCorrect: null,
       playlistLoading: false,
-      apiAddress: null
+      apiAddress: null,
+      placeholderArtistImages: [
+        {"Name": "Your Artists Will Show Up Here", "ImageURL": "https://picsum.photos/id/190/2048/1365"}
+      ]
     }
   },
   computed: {
@@ -230,7 +246,6 @@ export default {
   },
   mounted () {
     this.apiAddress = "https://otherside-api.herokuapp.com";
-    //this.apiAddress = "http://localhost:8081";
     
     this.initializeStore();
 
