@@ -236,6 +236,7 @@ a {
   .playlistcontent {
     display: block;
     float: none;
+    height: 20em;
   }
 
   .eventsHolder {

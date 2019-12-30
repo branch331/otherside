@@ -6,7 +6,6 @@
     </div>
 
     <div class="mainBody">
-    <div>
       <div class="leftsidebar">
         <Selector 
           selectorName="CITIES"
@@ -89,8 +88,6 @@
         </div>
 
       </div>
-    </div>
-
     </div>
   </div>
 
