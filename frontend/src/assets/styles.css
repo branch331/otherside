@@ -95,7 +95,7 @@ a {
 .searchResults {
   position: absolute;
   overflow: scroll;
-  max-height: 6.6em;
+  max-height: 7em;
   width: 98%;
   border: 1px solid black;
   background-color: rgb(20, 145, 20);
@@ -104,6 +104,8 @@ a {
 .searchResultItem {
   cursor: pointer;
   border: 1px solid black;
+  height: 2.3em;
+  padding-top: 0.25em;
 }
 
 .searchResultItem:hover {
@@ -248,7 +250,7 @@ a {
   }
 
   .mainBody {
-    height: 62em;
+    height: 65em;
     color: white;
     border-top: 1px solid #DDD2D1;
   }
@@ -290,7 +292,7 @@ a {
   }
 
   .mainBody {
-    height: 60em;
+    height: 62em;
   }
 }
 
@@ -329,7 +331,7 @@ a {
 
 @media (max-width:425px) {
   .leftsidebar {
-    width: 20em;
+    width: 23em;
   }
 
   .loginHeader {
