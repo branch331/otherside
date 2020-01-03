@@ -11,7 +11,7 @@ The frontend is built in VueJS and TypeScript, allowing users to first select ci
 
 *City selection - desktop*
 
-<img src="/gh-images/selectedcitiesmb.PNG" width="200" height="300">
+<img src="/gh-images/selectedcitiesmb.PNG" align="middle" width="400" height="600">
 
 *City selection - mobile*
 
@@ -19,7 +19,7 @@ Each time a city or genre selection is changed, a request is made to the backend
 
 Once the desired cities and genres are selected, the user can Log In using Spotify's authentication...
 
-<img src="/gh-images/spotifylogin.png" width="200" height="300">
+<img src="/gh-images/spotifylogin.png" align="middle" width="400" height="600">
 
 ...after which, they will see a rotating preview of the artists for which they can generate a playlist for. Logging in will generate a Spotify client that can be used for subsequent Spotify API requests.
 
@@ -27,7 +27,7 @@ Once the desired cities and genres are selected, the user can Log In using Spoti
 
 *Built playlist - desktop*
 
-<img src="/gh-images/builtplaylistmb.png" width="200" height="300">
+<img src="/gh-images/builtplaylistmb.PNG" align="middle" width="400" height="600">
 
 *Built playlist - mobile*
 
