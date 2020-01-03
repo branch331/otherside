@@ -1,9 +1,8 @@
-# otherside
+# Otherside
 
 Web application to generate a Spotify playlist based on today's events happening in particular US cities. Built with VueJS, JavaScript/TypeScript, Golang, Redis, Spotify API, and SeatGeek API.
 
-Full website: branch331.github.io/otherside
-
+Full website [here](https://branch331.github.io/otherside) 
 ## Frontend
 
 The frontend is built in VueJS and TypeScript, allowing users to first select cities and genres that they're interested in:
@@ -12,7 +11,7 @@ The frontend is built in VueJS and TypeScript, allowing users to first select ci
 
 *City selection - desktop*
 
-![City selection](/gh-images/selectedcitiesmb.png)
+![City selection](/gh-images/selectedcitiesmb.PNG)
 
 *City seleciton - mobile*
 
@@ -20,7 +19,7 @@ Each time a city or genre selection is changed, a request is made to the backend
 
 Once the desired cities and genres are selected, the user can Log In using Spotify's authentication...
 
-![Spotify login](/gh-images/spotifylogin.png)
+![Spotify login](/gh-images/spotifylogin.png = 250x500)
 
 ...after which, they will see a rotating preview of the artists for which they can generate a playlist for. Logging in will generate a Spotify client that can be used for subsequent Spotify API requests.
 
@@ -28,7 +27,7 @@ Once the desired cities and genres are selected, the user can Log In using Spoti
 
 *Built playlist - desktop*
 
-![Built playlist mb](/gh-images/builtplaylistmb.png)
+![Built playlist mb](/gh-images/builtplaylistmb.PNG)
 
 *Built playlist - mobile*
 
@@ -42,4 +41,4 @@ Notable HTTP endpoints include:
 * _localevents_ - Breaks down 'cities' and 'genres' query parameter arrays and makes requests to the SeatGeek API for events in the aforementioned cities. These events are then filtered by genre and returned to the requester.
 * _artistids_ - Takes an array of local events and returns an array of corresponding Spotify IDs for those performing at the event.
 * _toptracks_ - Takes an array of Spotify artist IDs and returns an array of the top track for each of those artists.
-* _buildplaylist_ - Simply builds a Spotify playlist based on top tracks.
+* _buildplaylist_ - Simply builds a Spotify playlist based on an input request body of Spotify top tracks.
