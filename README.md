@@ -7,30 +7,29 @@ Full website [here](https://branch331.github.io/otherside)
 
 The frontend is built in VueJS and TypeScript, allowing users to first select cities and genres that they're interested in:
 
+*City selection - desktop:*
+
 ![City selection](/gh-images/selectedcitiesdt.png)
 
-*City selection - desktop*
+*City selection - mobile:*
 
-<img src="/gh-images/selectedcitiesmb.PNG" align="middle" width="400" height="600">
-
-*City selection - mobile*
+<img src="/gh-images/selectedcitiesmb.PNG" align="center" width="400" height="600">
 
 Each time a city or genre selection is changed, a request is made to the backend for local events for said cities and genres. 
 
 Once the desired cities and genres are selected, the user can Log In using Spotify's authentication...
 
-<img src="/gh-images/spotifylogin.png" align="middle" width="400" height="600">
+<img src="/gh-images/spotifylogin.png" align="center" width="400" height="600">
 
 ...after which, they will see a rotating preview of the artists for which they can generate a playlist for. Logging in will generate a Spotify client that can be used for subsequent Spotify API requests.
 
+*Built playlist - desktop:*
+
 ![Built playlist](/gh-images/builtplaylistdt.png)
 
-*Built playlist - desktop*
+*Built playlist - mobile:*
 
-<img src="/gh-images/builtplaylistmb.PNG" align="middle" width="400" height="600">
-
-*Built playlist - mobile*
-
+<img src="/gh-images/builtplaylistmb.PNG" align="center" width="400" height="600">
 
 ## Backend
 
