@@ -76,7 +76,12 @@
         </div>
         
         <div class="btnHolder" v-if="isStateStringCorrect">
-          <button class="btn" :disabled="playlistLoading" v-on:click="buildPlaylist('Spooky Title', 'Spooooky Description!')">Build Playlist</button>
+          <button class="btn" :disabled="playlistLoading" 
+            v-on:click="buildPlaylist(
+              'Otherside Playlist', 
+              'Playlist featuring artists from around the country!')">
+              Build Playlist
+          </button>
         </div>
 
         <div class="playlistResult" v-if="playlistLoading === true">
@@ -367,6 +372,16 @@ export default {
         });
     },
     buildPlaylist: function (name, desc) {
+      var weekStartDate = new Date();
+      var weekStartMonth = weekStartDate.getMonth() + 1;
+      var weekStartDay = weekStartDate.getDate();
+
+      var weekEndDate = this.addDays(weekStartDate, 7);
+      var weekEndMonth = weekEndDate.getMonth() + 1;
+      var weekEndDay = weekEndDate.getDate();
+
+      name += ` [${weekStartMonth}/${weekStartDay} - ${weekEndMonth}/${weekEndDay}]`;
+
       var topTracksURL = `${this.apiAddress}/toptracks`;
       var buildPlaylistURL = `${this.apiAddress}/buildplaylist?name=` +
         name +
@@ -403,6 +418,11 @@ export default {
             this.forceLogOff();
           }
         );
+    },
+    addDays: function(date, days) {
+      const dateCopy = new Date(Number(date));
+      dateCopy.setDate(date.getDate() + days);
+      return dateCopy
     },
     setPerformersArray: function(localEvents) {
       var tempPerformers = new Array();
