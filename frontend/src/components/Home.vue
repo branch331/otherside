@@ -376,11 +376,7 @@ export default {
       var weekStartMonth = weekStartDate.getMonth() + 1;
       var weekStartDay = weekStartDate.getDate();
 
-      var weekEndDate = this.addDays(weekStartDate, 7);
-      var weekEndMonth = weekEndDate.getMonth() + 1;
-      var weekEndDay = weekEndDate.getDate();
-
-      name += ` [${weekStartMonth}/${weekStartDay} - ${weekEndMonth}/${weekEndDay}]`;
+      name += ` [${weekStartMonth}/${weekStartDay}]`;
 
       var topTracksURL = `${this.apiAddress}/toptracks`;
       var buildPlaylistURL = `${this.apiAddress}/buildplaylist?name=` +

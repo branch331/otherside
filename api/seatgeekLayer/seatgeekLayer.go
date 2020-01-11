@@ -131,7 +131,7 @@ func MakeSeatgeekEventsRequest(baseURL string, postCode string, timeToday TimeTo
 		"&datetime_utc.gte=" +
 		timeToday.BeginningOfDay.Format("2006-01-02") +
 		"&datetime_utc.lte=" +
-		timeToday.EndOfDay.AddDate(0, 0, 7).Format("2006-01-02") +
+		timeToday.EndOfDay.Format("2006-01-02") +
 		"&type=concert&type=music_festival&per_page=100&page=1"
 
 	resp, err := http.Get(SeatGeekLocalMusicEventsURL)
