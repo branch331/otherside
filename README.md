@@ -2,7 +2,7 @@
 
 Web application to generate a Spotify playlist based on today's events happening in particular US cities. Built with VueJS, JavaScript/TypeScript, Golang, Redis, Spotify API, and SeatGeek API.
 
-Full website [here](https://branch331.github.io/otherside) 
+Full website [here](https://bransgithub.github.io/otherside) 
 ## Frontend
 
 The frontend is built in VueJS and TypeScript, allowing users to first select cities and genres that they're interested in:
