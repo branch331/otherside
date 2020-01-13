@@ -62,7 +62,7 @@ export default {
             var index = sourceArray.indexOf(value);
             if (index > -1) {
                 if (targetArray == this.selectedItems && targetArray.length == this.maxItems) {
-                    alert("Nope!");
+                    alert(`Please select less than ${this.maxItems} items.`);
                 } else {
                     sourceArray.splice(index, 1);
                     targetArray.push(value)
