@@ -115,7 +115,7 @@ a {
 /* END SEARCH RESULTS */
 
 .eventsHolder {
-  overflow: scroll;
+  overflow: hidden;
   height: 20em;
   width: 40em;
   margin: 4em auto 0 auto;
@@ -274,10 +274,6 @@ a {
 @media (max-width:768px) {
   .leftsidebar {
     width: 35em;
-  }
-
-  .eventsHolder {
-    overflow: hidden;
   }
 
   #performerCarouselRight {
