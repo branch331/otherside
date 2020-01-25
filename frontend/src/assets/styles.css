@@ -9,8 +9,8 @@ a {
 .mainBody {
   background: url("forest2.jpg");
   background-repeat: no-repeat;
-  background-size: 1500px 1200px;
-  height: 45em;
+  background-size: auto;
+  height: 100vh;
 }
 
 /* NAVBAR */
@@ -32,12 +32,13 @@ a {
   overflow: scroll;
   background: rgba(31, 123, 106, 0.6);
   color: white;
-  height: 30em;
   padding: 0;
   border: 1px solid transparent;
   border-radius: 20px;
-  margin: 2em 6em 4em 4em;
-  width: 30em;
+  margin: 5em 6em 4em 4em;
+  width: 50vw;
+  height: 80vh;
+  margin-top: 5em;
   float: left;
   display: inline;
 }
@@ -177,7 +178,9 @@ a {
 
 .playlistcontent {
     height: 35em;
+    width: 40vw;
     margin: 0;
+    margin-top: 15em;
     padding: 0;
     float: left;
     display: inline;
@@ -223,7 +226,7 @@ a {
   font-weight: bold;
 }
 
-@media (max-width:1300px) {
+@media (max-width:1600px) {
   .leftsidebar {
     width: 45em;
     margin: 2em auto 0 auto;
@@ -239,6 +242,9 @@ a {
     display: block;
     float: none;
     height: 20em;
+    width: 100%;
+    margin-top: 0;
+    margin-left: 0;
   }
 
   .eventsHolder {
@@ -250,7 +256,7 @@ a {
   }
 
   .mainBody {
-    height: 65em;
+    height: 150vh;
     color: white;
     border-top: 1px solid #DDD2D1;
   }
@@ -290,9 +296,11 @@ a {
   .playlistcontent .btn { 
     margin-top: 0.5em;
   }
+}
 
+@media(max-height:700px) {
   .mainBody {
-    height: 62em;
+    height: 200vh;
   }
 }
 
