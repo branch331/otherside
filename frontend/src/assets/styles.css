@@ -29,7 +29,6 @@ a {
 /* NAVBAR */
 
 .leftsidebar {
-  overflow: scroll;
   background: rgba(31, 123, 106, 0.6);
   color: white;
   padding: 0;
@@ -95,7 +94,6 @@ a {
 
 .searchResults {
   position: absolute;
-  overflow: scroll;
   max-height: 7em;
   width: 98%;
   border: 1px solid black;
@@ -226,7 +224,7 @@ a {
   font-weight: bold;
 }
 
-@media (max-width:1600px) {
+@media (max-width:1800px) {
   .leftsidebar {
     width: 45em;
     margin: 2em auto 0 auto;
