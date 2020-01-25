@@ -93,6 +93,7 @@ a {
 }
 
 .searchResults {
+  overflow-y: auto;
   position: absolute;
   max-height: 7em;
   width: 98%;
